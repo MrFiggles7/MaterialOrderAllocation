@@ -1,5 +1,8 @@
 <template>
-  <table class="table text-left" style="font-size: .6rem; border: 1px solid rgba(0,0,0,.4)">
+  <table
+      class="table text-left m-0"
+      style="font-size: .6rem;
+      border: 1px solid rgba(0,0,0,.4)">
     <thead>
       <tr id="table-head">
         <th>#</th>
@@ -19,8 +22,24 @@
             <b-icon scale=".75" icon="chevron-double-right"></b-icon>
           </b-button>
         </th>
-        <th style="max-width: 3rem">Qty Fulfilled</th>
-        <th style="max-width: 2rem">$ Allocation</th>
+        <th style="max-width: 3rem">
+          Qty Fulfilled
+          <b-button @click="setAllLocked" class="table-button" size="sm" variant="outline-secondary">
+            <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
+          </b-button>
+        </th>
+        <th style="max-width: 2rem">
+          $ Allocation
+          <b-button
+              class="table-button"
+              style="border: none"
+              size="sm"
+              variant="outline-light"
+              @click="setCostAllocation"
+          >
+            <b-icon variant="success" scale=".75" icon="arrow-clockwise"></b-icon>
+          </b-button>
+        </th>
         <th style="max-width: 2rem">% Allocation</th>
         <th style="max-width: 2rem">Qty Lines</th>
         <th style="max-width: 3rem">Last Shipment In</th>
@@ -37,7 +56,7 @@
           ref="item"
           @delete="$emit('delete', item)"
           @update-job-item="updateJobItem"
-          @set-cost-allocation="setCostAllocation"
+          @set-allocated-cost="$emit('set-allocated-cost')"
           @set-quantity="setQtyFulfilled"
       >
       </material-order-job-item>
@@ -53,11 +72,12 @@ export default {
   components: {MaterialOrderJobItem},
   data() {
     return {
-
+      locked: false,
     }
   },
 
   props: {
+
     jobItems: Array,
     typeList: Array,
     allocationTypeList: Array,
@@ -73,6 +93,14 @@ export default {
   },
 
   methods: {
+
+    setAllLocked: function (){
+      this.locked = !this.locked
+      this.$refs.item.forEach((item)=>{
+        item.locked = this.locked
+      })
+    },
+
     setQtyFulfilled: function (item, qty){
       this.$emit('set-quantity', item, qty)
     },

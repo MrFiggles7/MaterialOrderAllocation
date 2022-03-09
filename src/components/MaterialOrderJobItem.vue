@@ -59,7 +59,7 @@
         <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
       </b-button>
     </td>
-    <td style="max-width: 2rem">
+    <td style="max-width: 3rem">
       <div>
         <span style="vertical-align: text-top">$&nbsp;</span>
         <b-input
@@ -144,9 +144,10 @@ export default {
   watch: {
     item: {
       deep: true,
-      immediate: true,
+
       handler(){
         this.resetItemRef()
+        // this.$emit('set-allocated-cost')
         // this.$emit('set-cost-allocation')
       }
     },
@@ -198,6 +199,9 @@ export default {
   },
 
   created() {
+    if(this.item.costAllocation != null){
+      this.locked = true;
+    }
     this.resetItemRef()
   }
 }

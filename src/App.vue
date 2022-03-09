@@ -2,16 +2,19 @@
   <div id="app">
     <b-container>
       <div class="header-bar clearfix mb-1">
+        <div class="left" style="float: left">
+          Total Order Cost: {{totalAllocatedCost}} / {{totalCost}}
+        </div>
+
+
         <div class="right" style="float: right">
           <b-button variant="secondary" size="sm" class="mr-3">
             Save Changes
           </b-button>
-          <b-button @click="show = !show"  variant="primary" size="sm">
+          <b-button @click="show = !show" variant="primary" size="sm">
             Add New
           </b-button>
         </div>
-
-
       </div>
 
       <material-order-table
@@ -24,8 +27,15 @@
           @update-job-item="updateJobItem"
           @set-cost-allocation="setCostAllocation"
           @set-quantity="setQuantity"
+          @set-allocated-cost="setAllocatedCost"
       >
       </material-order-table>
+      <div style="float: right;" class="mt-1">
+        <b-button @click="handleSplit" variant="success" size="sm">
+          Split
+        </b-button>
+      </div>
+
 
       <modal-entry
           :show="show"
@@ -43,7 +53,7 @@
           </div>
         </template>
         Delete This Material Allocation?<br>
-        {{deletableItem.jobItem}}
+        {{ deletableItem.jobItem }}
       </b-modal>
     </b-container>
   </div>
@@ -54,6 +64,7 @@
 
 import MaterialOrderTable from "./components/MaterialOrderTable";
 import ModalEntry from "./components/ModalEntry";
+
 export default {
   name: 'App',
   components: {
@@ -62,15 +73,25 @@ export default {
   },
 
   watch: {
-    jobItems: function (){
-      this.setCostAllocation()
+    jobItems: function () {
+      // this.setTotal()
+      // this.setAllocatedCost()
+      // this.setCostAllocation()
     }
   },
 
+  mounted() {
+    this.setAllocatedCost()
 
+  },
 
-  data(){
-    return{
+  updated() {
+    // this.setCostAllocation()
+    // this.setAllocatedCost()
+  },
+
+  data() {
+    return {
       show: false,
       confirmationShow: false,
       updated: false,
@@ -79,7 +100,8 @@ export default {
       },
 
       materialOrderId: null,
-      totalCost: 2000,
+      totalCost: 2000.00,
+      allocatedCost: 0.00,
 
       typeList: [
         {value: null, text: 'Supplied Material Type'},
@@ -106,7 +128,7 @@ export default {
           jobItem: 'TPS-30961-A_2022-02-15',
           jobItemQty: 2,
           qtyFulfilled: 1,
-          costAllocation: null,
+          costAllocation: 400,
           qtyLines: null,
           lastShipmentIn: new Date().toLocaleString('en-us'),
         },
@@ -158,73 +180,116 @@ export default {
     }
   },
 
-  updated(){
-    // this.setCostAllocation()
+
+  computed: {
+    totalAllocatedCost: function (){
+      let total = 0;
+      this.jobItems.forEach((item)=>{
+        total += item.costAllocation
+      })
+      return total
+    }
   },
 
   methods: {
-    setQuantity: function (item, qty){
-      if(qty == null){
-        let jobItem = this.$refs.table.$refs.item.find(i => i.id === item.id)
-        if(jobItem.locked === false){
-          item.qtyFulfilled = item.jobItemQty;
-        }
-      }
-      else{
-        item.qtyFulfilled = parseInt(qty)
-      }
-
+    handleSplit: function () {
+      this.setAllocatedCost()
+      this.setCostAllocation()
     },
 
-    updateJobItem: function (jobItem){
-      console.log('updated', jobItem)
-      if(this.jobItems.find(j => j.id === jobItem.id) !== jobItem){
-        this.$set(this.jobItems, this.jobItems.indexOf(this.jobItems.find(i => i.id === jobItem.id)), jobItem)
+    setAllocatedCost: function () {
+      let cost = 0;
+      this.jobItems.forEach((item) => {
+        if (item.costAllocation) {
+          let itemRef = this.$refs.table.$refs.item.find(i => i.id === item.id)
+          if (itemRef.locked) {
+            cost += item.costAllocation
+          }
+        }
+
+      })
+      this.allocatedCost = cost;
+    },
+
+    setQuantity: function (item, qty) {
+      if (qty == null) {
+        let jobItem = this.$refs.table.$refs.item.find(i => i.id === item.id)
+        if (jobItem.locked === false) {
+          item.qtyFulfilled = item.jobItemQty;
+          this.updateJobItem(item)
+        }
+      } else {
+        item.qtyFulfilled = parseInt(qty)
+        this.updateJobItem(item)
       }
-      else{
+    },
+
+    updateJobItem: function (jobItem) {
+
+      if (this.jobItems.find(j => j.id === jobItem.id) !== jobItem) {
+        console.log('updated', jobItem)
+        this.$set(this.jobItems, this.jobItems.indexOf(this.jobItems.find(i => i.id === jobItem.id)), jobItem)
+      } else {
         return false
       }
       // this.jobItems[this.jobItems.indexOf(this.jobItems.find(i => i.id === jobItem.id))] = jobItem
     },
 
-    setCostAllocation: function (){
-      if(this.jobItems){
-        this.jobItems.forEach((jobItem)=>{
+    setCostAllocation: function () {
+      console.log('setting cost allocation')
+
+      if (this.jobItems) {
+        // for(const jobItem of this.jobItems){
+        //   let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
+        //
+        //   if(item){
+        //     if(!item.locked){
+        //       jobItem.costAllocation = await this.calculateCostAllocation(item)
+        //       console.log('got!')
+        //     }
+        //   }
+        // }
+
+
+        this.jobItems.forEach((jobItem) => {
           let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
 
-          if(item){
-            jobItem.costAllocation = this.calculateCostAllocation(jobItem);
-            this.updateJobItem(jobItem)
+          if (item) {
+            if (!item.locked) {
+              jobItem.costAllocation = this.calculateCostAllocation(jobItem);
+              this.updateJobItem(jobItem)
+
+            }
           }
-
         })
-      }
 
+      }
     },
 
-    calculateCostAllocation: function(jobItem){
+    calculateCostAllocation: function (jobItem) {
       let total = 0;
-      this.jobItems.forEach((item)=> {
-        if(item.qtyFulfilled){
+
+      this.jobItems.forEach((item) => {
+        if (item.qtyFulfilled && !(this.$refs.table.$refs.item.find(i => i.id === item.id).locked)) {
           total += item.qtyFulfilled
         }
       })
-      return parseFloat((this.totalCost * (jobItem.qtyFulfilled / total)).toFixed(2));
+      return parseFloat(((this.totalCost - this.allocatedCost) * (jobItem.qtyFulfilled / total)).toFixed(2));
     },
 
-    setShow: function (show){
+    setShow: function (show) {
       this.show = show;
     },
 
-    resetDeletableItem: function (){
+    resetDeletableItem: function () {
       this.deletableItem = {
         jobItem: null
       }
     },
 
-    createNewMaterialAllocation: function (arr){
+    createNewMaterialAllocation: function (arr) {
       console.log(arr)
-      arr.data.forEach((item)=>{
+      arr.data.forEach((item) => {
         this.jobItems.push({
           id: item.id,
           type: arr.type,
@@ -239,17 +304,17 @@ export default {
       })
     },
 
-    handleDelete: function (item){
+    handleDelete: function (item) {
       this.deletableItem = item;
       this.getConfirmation();
     },
 
-    getConfirmation: function (){
+    getConfirmation: function () {
       this.confirmationShow = true;
     },
 
-    deleteMaterialAllocation: function (item){
-     this.jobItems.splice(this.jobItems.indexOf(this.jobItems.find(i => i.id === item.id)), 1)
+    deleteMaterialAllocation: function (item) {
+      this.jobItems.splice(this.jobItems.indexOf(this.jobItems.find(i => i.id === item.id)), 1)
     }
   }
 }
