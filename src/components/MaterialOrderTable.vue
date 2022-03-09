@@ -3,8 +3,8 @@
     <thead>
       <tr id="table-head">
         <th>#</th>
-        <th>Type</th>
-        <th style="max-width: 3rem">Inventory Type</th>
+        <th style="max-width: 3rem">Allocation Type</th>
+        <th style="max-width: 4rem">Type</th>
         <th style="max-width: 5rem">Job Item</th>
         <th style="max-width: 2rem; min-width: 2rem">
           <div style="display: inline-block; vertical-align: sub;">
@@ -31,8 +31,14 @@
           :key="item.id"
           :item="item"
           :index="jobItems.indexOf(item) + 1"
-          ref="materialItem"
+          :typeList="typeList"
+          :allocationTypeList="allocationTypeList"
+          :totalCost="totalCost"
+          ref="item"
           @delete="$emit('delete', item)"
+          @update-job-item="updateJobItem"
+          @set-cost-allocation="setCostAllocation"
+          @set-quantity="setQtyFulfilled"
       >
       </material-order-job-item>
 
@@ -53,15 +59,39 @@ export default {
 
   props: {
     jobItems: Array,
+    typeList: Array,
+    allocationTypeList: Array,
+    totalCost: Number,
   },
 
   computed: {
 
   },
 
+  updated(){
+
+  },
+
   methods: {
-    percentAllocation: function (item){
-      return item.costAllocation;
+    setQtyFulfilled: function (item, qty){
+      this.$emit('set-quantity', item, qty)
+    },
+    setCostAllocation: function (jobItem){
+      this.$emit('set-cost-allocation', jobItem)
+    },
+
+    updateJobItem: function (jobItemRef){
+      this.$emit('update-job-item', jobItemRef)
+    },
+
+    costAllocationMethod: function (item){
+      let total = 0;
+      this.jobItems.forEach((item)=> {
+        if(item.qtyFulfilled){
+          total += item.qtyFulfilled
+        }
+      })
+      return parseFloat((this.totalCost * (item.qtyFulfilled / total)).toFixed(2));
     },
 
     setAllJobQty: function (){
@@ -69,7 +99,7 @@ export default {
       //   jobItem.qtyFulfilled = jobItem.jobItemQty;
       // })
 
-      this.$refs.materialItem.forEach((i)=>{
+      this.$refs.item.forEach((i)=>{
         i.setQtyFulfilled()
       })
     }
@@ -81,7 +111,7 @@ export default {
 .table td, .table th{
   word-break: break-word;
   vertical-align: inherit;
-  padding: 0 .25rem;
+  padding: .25rem .25rem;
   border-right: 1px solid rgba(0,0,0, .2);
 }
 

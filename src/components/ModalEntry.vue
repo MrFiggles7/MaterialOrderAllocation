@@ -1,5 +1,5 @@
 <template>
-  <b-modal size="lg" v-model="show" centered id="modal-1" title="New Material Allocation">
+  <b-modal size="lg" v-model="showRef" centered id="modal-1" title="New Material Allocation">
     <b-row class="p-5">
       <b-col>
         <b-form>
@@ -7,6 +7,11 @@
               class="mb-4"
               v-model="selectedJob"
               :options="jobsList"
+          ></b-form-select>
+          <b-form-select
+              class="mb-4"
+              v-model="selectedAllocationType"
+              :options="allocationTypeList"
           ></b-form-select>
           <b-form-select
               v-model="selectedType"
@@ -46,7 +51,7 @@
             variant="secondary"
             size="sm"
             class="float-left"
-            @click="$emit('close')"
+            @click="showRef = false"
         >
           Cancel
         </b-button>
@@ -75,9 +80,24 @@ export default {
     },
 
     createNewMaterialAllocation: function (){
-      this.$emit('create-new-material-allocation', this.jobItemList.filter(i => i.checked === true).map(j => {
-        return j.name
-      }))
+      let jobList = {
+        data: this.jobItemList.filter(j => j.checked === true),
+        type: this.selectedType,
+        allocationType: this.selectedAllocationType,
+      }
+
+      this.showRef = false;
+      this.$emit('create-new-material-allocation', jobList)
+    }
+  },
+
+  watch: {
+    showRef: function (){
+      this.$emit('update-show', this.showRef)
+    },
+
+    show: function (){
+      this.showRef = this.show;
     }
   },
 
@@ -85,54 +105,55 @@ export default {
     return {
       selectedJob: null,
       selectedType: null,
+      selectedAllocationType: null,
+      showRef: false,
       jobsList: [
         {value: null, text: 'Please select a Job'},
           'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A',
-        'TPS-40961-A'
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A',
+          'TPS-40961-A'
       ],
 
-      typeList: [
-        {value: null, text: 'Supplied Material Type'},
-          'FABs',
-          'Other',
-          'Parts',
-          'Services',
-          'Stencils',
-      ],
+
 
       jobItemList: [
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         },
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         },
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         },
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         },
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         },
         {
+          id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
           checked: false,
         }
@@ -140,8 +161,14 @@ export default {
     }
   },
 
+  created() {
+    this.showRef = this.show;
+  },
+
   props: {
     show: Boolean,
+    typeList: Array,
+    allocationTypeList: Array,
   }
 }
 </script>

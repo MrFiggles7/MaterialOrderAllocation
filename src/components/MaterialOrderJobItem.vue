@@ -2,14 +2,22 @@
   <tr class="table-body" :style="locked ? 'background-color: rgba(255,0,0,.1)' : ''">
     <td>{{ index }}</td>
     <td
-
+        style="max-width: 3rem"
     >
-      {{ type }}
+      <b-select
+          :options="allocationTypeList"
+          v-model="allocationType"
+      >
+      </b-select>
     </td>
     <td
-
+      style="max-width: 4rem"
     >
-      {{ inventoryType }}
+      <b-select
+        :options="typeList"
+        v-model="type"
+      >
+      </b-select>
     </td>
     <td
         style="max-width: 5rem"
@@ -25,7 +33,7 @@
           class="table-button"
           size="sm"
           variant="outline-secondary"
-          @click="setQtyFulfilled"
+          @click="setQtyFulfilled()"
       >
         <b-icon scale=".75" icon="chevron-double-right"></b-icon>
       </b-button>
@@ -40,11 +48,11 @@
     </td>
     <td style="max-width: 3rem">
       <b-input
-          :disabled="locked"
           style="vertical-align: sub"
-          type="text"
+          type="number"
           class="w-50"
-          :value="qtyFulfilled"
+          @blur="setQtyFulfilled(this.qtyFulfilled ? this.qtyFulfilled : 0)"
+          v-model="qtyFulfilled"
       >
       </b-input>
       <b-button @click="locked = !locked" class="table-button" size="sm" variant="outline-secondary">
@@ -52,29 +60,28 @@
       </b-button>
     </td>
     <td style="max-width: 2rem">
-      <b-input
-          style="vertical-align: text-top"
-          type="text"
-          placeholder="$"
-          class="w-100"
-          :value="costAllocation">
-      </b-input>
+      <div>
+        <span style="vertical-align: text-top">$&nbsp;</span>
+        <b-input
+            style="vertical-align: text-top"
+            type="number"
+            class="w-75"
+            v-model="costAllocation"
+        >
+        </b-input>
+      </div>
+
     </td>
     <td style="max-width: 2rem">
-      <b-input
-          style="vertical-align: text-top"
-          type="text"
-          placeholder="%"
-          class="w-100"
-          :value="percentAllocation">
-      </b-input>
+        {{percentAllocation ||  0}}&nbsp;%
     </td>
     <td style="max-width: 2rem">
       <b-input
           style="vertical-align: text-top"
           type="number"
           class="w-100"
-          :value="qtyLines">
+          v-model="qtyLines"
+      >
       </b-input>
     </td>
     <td style="max-width: 3rem">
@@ -99,25 +106,32 @@ export default {
   data(){
     return{
       locked: false,
+      id: null,
       type: null,
-      inventoryType: null,
+      allocationType: null,
       jobItem: null,
       jobItemQty: null,
-      qtyFulfilled: null,
+      qtyFulfilled: 0,
       costAllocation: null,
       qtyLines: null,
-      lastShipmentIn: null
+      lastShipmentIn: null,
+      selectedType: null,
     }
   },
 
   props: {
     item: {type: Object, twoWay: true},
     index: Number,
+    typeList: Array,
+    allocationTypeList: Array,
+    calculatedCost: Number,
+    percentAllocation: Number,
+    totalCost: Number,
   },
 
   computed: {
     jobItemQtyMatch: function (){
-      if(this.jobItemQty === this.qtyFulfilled){
+      if(parseFloat(this.jobItemQty) === parseFloat(this.qtyFulfilled)){
         return true
       }
       else{
@@ -125,9 +139,6 @@ export default {
       }
     },
 
-    percentAllocation: function (item){
-      return item.costAllocation;
-    },
   },
 
   watch: {
@@ -136,22 +147,52 @@ export default {
       immediate: true,
       handler(){
         this.resetItemRef()
+        // this.$emit('set-cost-allocation')
       }
+    },
+
+    qtyFulfilled: {
+
+      handler(){
+
+      }
+
     }
+  },
+
+  updated() {
+    let objectRef = {
+      id: this.id,
+      type: this.type,
+      allocationType: this.allocationType,
+      jobItem: this.jobItem,
+      jobItemQty: this.jobItemQty,
+      qtyFulfilled: parseInt(this.qtyFulfilled),
+      costAllocation: parseInt(this.costAllocation),
+      qtyLines: parseInt(this.qtyLines),
+      lastShipmentIn: this.lastShipmentIn,
+    }
+
+    this.$emit('update-job-item', objectRef)
   },
 
   methods: {
 
+
     resetItemRef: function (){
       for(let key in this.item){
-        this[key] = this.item[key]
+          this[key] = this.item[key]
       }
     },
 
-    setQtyFulfilled: function (){
-      if(this.locked !== true){
-        this.qtyFulfilled = this.item.jobItemQty
+    setQtyFulfilled: function (qty){
+      if(qty != null){
+        this.$emit('set-quantity', this.item, qty)
       }
+      else{
+        this.$emit('set-quantity', this.item)
+      }
+
     },
 
   },
@@ -201,5 +242,17 @@ export default {
 .form-control:focus {
   border: 2px solid black;
   box-shadow: none;
+}
+
+.custom-select {
+  width: 100%;
+  height: inherit;
+  padding: .25rem 0;
+  font-size: inherit;
+  font-weight: inherit;
+  line-height: inherit;
+  border: inherit;
+  border-radius: inherit;
+  box-sizing: inherit;
 }
 </style>
