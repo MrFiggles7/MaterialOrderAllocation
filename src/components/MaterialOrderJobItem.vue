@@ -1,5 +1,5 @@
 <template>
-  <tr class="table-body" :style="locked ? 'background-color: rgba(255,0,0,.1)' : ''">
+  <tr class="table-body" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
     <td>{{ index }}</td>
     <td
         style="max-width: 3rem"
@@ -64,6 +64,7 @@
         <span style="vertical-align: text-top">$&nbsp;</span>
         <b-input
             style="vertical-align: text-top"
+            step=".01"
             type="number"
             class="w-75"
             v-model="costAllocation"
@@ -86,8 +87,10 @@
     </td>
     <td style="max-width: 3rem">
       {{ lastShipmentIn }}
+    </td>
+    <td style="max-width: .75rem;">
       <b-button
-          class="table-button"
+          class="p-0"
           style="border: none"
           size="sm"
           variant="outline-light"
@@ -112,10 +115,11 @@ export default {
       jobItem: null,
       jobItemQty: null,
       qtyFulfilled: 0,
-      costAllocation: null,
+      costAllocation: 0,
       qtyLines: null,
       lastShipmentIn: null,
       selectedType: null,
+      percentAllocation: 0,
     }
   },
 
@@ -125,7 +129,6 @@ export default {
     typeList: Array,
     allocationTypeList: Array,
     calculatedCost: Number,
-    percentAllocation: Number,
     totalCost: Number,
   },
 
@@ -138,7 +141,6 @@ export default {
         return false;
       }
     },
-
   },
 
   watch: {
@@ -152,13 +154,35 @@ export default {
       }
     },
 
-    qtyFulfilled: {
+    locked: function (){
+      this.$emit('set-allocated-cost')
+    },
 
-      handler(){
-
+    type: function (){
+      if(this.type !== this.item.type){
+        this.$emit('set-updated', true)
       }
-
-    }
+    },
+    allocationType: function (){
+      if(this.allocationType !== this.item.allocationType){
+        this.$emit('set-updated', true)
+      }
+    },
+    qtyFulfilled: function (){
+      if(this.qtyFulfilled !== this.item.qtyFulfilled){
+        this.$emit('set-updated', true)
+      }
+    },
+    costAllocation: function (){
+      if(this.costAllocation !== this.item.costAllocation){
+        this.$emit('set-updated', true)
+      }
+    },
+    qtyLines: function (){
+      if(this.qtyLines !== this.item.qtyLines){
+        this.$emit('set-updated', true)
+      }
+    },
   },
 
   updated() {
@@ -169,7 +193,7 @@ export default {
       jobItem: this.jobItem,
       jobItemQty: this.jobItemQty,
       qtyFulfilled: parseInt(this.qtyFulfilled),
-      costAllocation: parseInt(this.costAllocation),
+      costAllocation: parseFloat(this.costAllocation),
       qtyLines: parseInt(this.qtyLines),
       lastShipmentIn: this.lastShipmentIn,
     }
@@ -178,8 +202,6 @@ export default {
   },
 
   methods: {
-
-
     resetItemRef: function (){
       for(let key in this.item){
           this[key] = this.item[key]
@@ -199,7 +221,7 @@ export default {
   },
 
   created() {
-    if(this.item.costAllocation != null){
+    if(this.item.costAllocation != null && this.item.costAllocation !== 0){
       this.locked = true;
     }
     this.resetItemRef()
@@ -258,5 +280,6 @@ export default {
   border: inherit;
   border-radius: inherit;
   box-sizing: inherit;
+  background-color: inherit;
 }
 </style>

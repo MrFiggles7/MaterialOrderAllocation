@@ -8,11 +8,13 @@
 
 
         <div class="right" style="float: right">
-          <b-button variant="secondary" size="sm" class="mr-3">
+          <b-button :disabled="updated ? false : true"  :variant="updated ? 'info' : 'light'" size="sm" class="mr-3">
             Save Changes
+            <b-icon :variant="updated ? 'light' : 'dark'" icon="arrow-clockwise"></b-icon>
           </b-button>
-          <b-button @click="show = !show" variant="primary" size="sm">
+          <b-button @click="show = !show" variant="secondary" size="sm">
             Add New
+            <b-icon variant="light" icon="plus"></b-icon>
           </b-button>
         </div>
       </div>
@@ -28,11 +30,13 @@
           @set-cost-allocation="setCostAllocation"
           @set-quantity="setQuantity"
           @set-allocated-cost="setAllocatedCost"
+          @set-updated="setUpdated"
       >
       </material-order-table>
       <div style="float: right;" class="mt-1">
         <b-button @click="handleSplit" variant="success" size="sm">
-          Split
+          Allocate
+          <b-icon class="ml-2" icon="arrow-left-right"></b-icon>
         </b-button>
       </div>
 
@@ -46,13 +50,17 @@
       </modal-entry>
 
 
-      <b-modal @cancel="resetDeletableItem" @ok="deleteMaterialAllocation(deletableItem)" v-model="confirmationShow">
+      <b-modal header-class="text-center" body-class="text-center" v-model="confirmationShow">
         <template #modal-header>
-          <div class="w-100">
+          <div class="w-100 font-weight-bold" style="font-size: 1.4rem">
             Are you Sure?
           </div>
         </template>
-        Delete This Material Allocation?<br>
+        <template #modal-footer>
+          <b-button class="mr-auto" variant="secondary" @click="confirmationShow = false">Cancel</b-button>
+          <b-button variant="danger" @click="deleteMaterialAllocation(deletableItem)">Delete</b-button>
+        </template>
+        <span>Delete This Material Allocation?</span><br>
         {{ deletableItem.jobItem }}
       </b-modal>
     </b-container>
@@ -74,20 +82,31 @@ export default {
 
   watch: {
     jobItems: function () {
-      // this.setTotal()
-      // this.setAllocatedCost()
-      // this.setCostAllocation()
+
     }
   },
 
   mounted() {
     this.setAllocatedCost()
+    this.setPercentAllocation()
 
+    if(this.$refs.table.$refs.item.every(i => i.locked === true)){
+      this.$refs.table.locked = true
+    }
+    else{
+      this.$refs.table.locked = false
+    }
   },
 
   updated() {
     // this.setCostAllocation()
     // this.setAllocatedCost()
+    if(this.$refs.table.$refs.item.every(i => i.locked === true)){
+      this.$refs.table.locked = true
+    }
+    else{
+      this.$refs.table.locked = false
+    }
   },
 
   data() {
@@ -102,6 +121,7 @@ export default {
       materialOrderId: null,
       totalCost: 2000.00,
       allocatedCost: 0.00,
+      qtyLines: 4,
 
       typeList: [
         {value: null, text: 'Supplied Material Type'},
@@ -114,8 +134,6 @@ export default {
 
       allocationTypeList: [
         {value: null, text: 'Allocation Type'},
-        'Asset',
-        'Supply',
         'Inventory',
         'Job'
       ],
@@ -123,58 +141,58 @@ export default {
       jobItems: [
         {
           id: Math.random(),
-          type: null,
-          allocationType: null,
+          type: 'Parts',
+          allocationType: 'Inventory',
           jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 2,
-          qtyFulfilled: 1,
-          costAllocation: 400,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
-        },
-        {
-          id: Math.random(),
-          type: null,
-          allocationType: null,
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 2,
+          jobItemQty: 3,
           qtyFulfilled: 2,
-          costAllocation: null,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
+          costAllocation: 0,
+          qtyLines: 4,
+          lastShipmentIn: this.getDate()
         },
         {
           id: Math.random(),
-          type: null,
-          allocationType: null,
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 2,
-          qtyFulfilled: 3,
-          costAllocation: null,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
-        },
-        {
-          id: Math.random(),
-          type: null,
-          allocationType: null,
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 2,
-          qtyFulfilled: 2,
-          costAllocation: null,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
-        },
-        {
-          id: Math.random(),
-          type: null,
-          allocationType: null,
+          type: 'Parts',
+          allocationType: 'Inventory',
           jobItem: 'TPS-30961-A_2022-02-15',
           jobItemQty: 2,
           qtyFulfilled: 5,
-          costAllocation: null,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
+          costAllocation: 0,
+          qtyLines: 4,
+          lastShipmentIn: this.getDate()
+        },
+        {
+          id: Math.random(),
+          type: 'Parts',
+          allocationType: 'Inventory',
+          jobItem: 'TPS-30961-A_2022-02-15',
+          jobItemQty: 1,
+          qtyFulfilled: 1,
+          costAllocation: 0,
+          qtyLines: 4,
+          lastShipmentIn: this.getDate()
+        },
+        {
+          id: Math.random(),
+          type: 'Parts',
+          allocationType: 'Inventory',
+          jobItem: 'TPS-30961-A_2022-02-15',
+          jobItemQty: 4,
+          qtyFulfilled: 3,
+          costAllocation: 0,
+          qtyLines: 4,
+          lastShipmentIn: this.getDate()
+        },
+        {
+          id: Math.random(),
+          type: 'Parts',
+          allocationType: 'Inventory',
+          jobItem: 'TPS-30961-A_2022-02-15',
+          jobItemQty: 7,
+          qtyFulfilled: 6,
+          costAllocation: 0,
+          qtyLines: 4,
+          lastShipmentIn: this.getDate()
         }
       ],
     }
@@ -192,9 +210,27 @@ export default {
   },
 
   methods: {
+    setUpdated: function (bool){
+      this.updated = bool
+    },
+    getDate: function (){
+      let date = new Date();
+      date = date.getFullYear() + '-' + date.getMonth().toLocaleString('en-us', {minimumIntegerDigits: 2}) + '-' + date.getDate().toLocaleString('en-us', {minimumIntegerDigits: 2})
+      return date;
+    },
+
     handleSplit: function () {
+      this.setUpdated(true)
       this.setAllocatedCost()
       this.setCostAllocation()
+      this.setPercentAllocation()
+    },
+
+    setPercentAllocation: function (){
+      let vm = this;
+      this.$refs.table.$refs.item.forEach((item)=>{
+        item.percentAllocation = ((vm.jobItems[vm.jobItems.indexOf(item.item)].costAllocation / vm.totalCost) * 100).toFixed(2)
+      })
     },
 
     setAllocatedCost: function () {
@@ -232,36 +268,71 @@ export default {
       } else {
         return false
       }
-      // this.jobItems[this.jobItems.indexOf(this.jobItems.find(i => i.id === jobItem.id))] = jobItem
+
     },
 
     setCostAllocation: function () {
       console.log('setting cost allocation')
 
       if (this.jobItems) {
-        // for(const jobItem of this.jobItems){
-        //   let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
-        //
-        //   if(item){
-        //     if(!item.locked){
-        //       jobItem.costAllocation = await this.calculateCostAllocation(item)
-        //       console.log('got!')
-        //     }
-        //   }
-        // }
+        let refArr = [];
+        this.jobItems.forEach((jobItem)=>{
+          let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id);
 
-
-        this.jobItems.forEach((jobItem) => {
-          let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
-
-          if (item) {
-            if (!item.locked) {
-              jobItem.costAllocation = this.calculateCostAllocation(jobItem);
-              this.updateJobItem(jobItem)
-
-            }
+          if(item.locked !== true){
+            refArr.push(jobItem)
           }
         })
+
+
+
+        refArr.forEach((jobItem)=>{
+          let vm = this;
+          if(refArr.indexOf(jobItem) === refArr.length-1){
+            jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
+
+            if(jobItem.costAllocation !== 0){
+              jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
+
+              let remainder = (vm.totalCost - vm.totalAllocatedCost)
+              jobItem.costAllocation += remainder;
+              jobItem.costAllocation = Number(jobItem.costAllocation.toFixed(2))
+              vm.updateJobItem(jobItem)
+            }
+
+          }
+          else{
+            jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
+            jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
+            vm.updateJobItem(jobItem)
+          }
+        })
+
+        // this.jobItems.forEach((jobItem) => {
+        //   let vm = this;
+        //   let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
+        //
+        //   if (item) {
+        //     if (!item.locked) {
+        //       if(vm.jobItems.indexOf(jobItem) === vm.jobItems.length-1){
+        //         jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
+        //         jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
+        //
+        //         let remainder = (vm.totalCost - vm.totalAllocatedCost)
+        //         jobItem.costAllocation += remainder;
+        //         jobItem.costAllocation = Number(jobItem.costAllocation.toFixed(2))
+        //         vm.updateJobItem(jobItem)
+        //       }
+        //       else{
+        //         jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
+        //         jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
+        //         vm.updateJobItem(jobItem)
+        //       }
+        //
+        //
+        //     }
+        //   }
+        // })
 
       }
     },
@@ -274,7 +345,10 @@ export default {
           total += item.qtyFulfilled
         }
       })
-      return parseFloat(((this.totalCost - this.allocatedCost) * (jobItem.qtyFulfilled / total)).toFixed(2));
+      if(total === 0){
+        return 0
+      }
+      return parseFloat(((this.totalCost - this.allocatedCost) * (jobItem.qtyFulfilled / total)).toPrecision(12));
     },
 
     setShow: function (show) {
@@ -298,8 +372,8 @@ export default {
           jobItemQty: 2,
           qtyFulfilled: null,
           costAllocation: null,
-          qtyLines: null,
-          lastShipmentIn: new Date().toLocaleString('en-us'),
+          qtyLines: this.qtyLines,
+          lastShipmentIn: this.getDate(),
         })
       })
     },
@@ -315,6 +389,7 @@ export default {
 
     deleteMaterialAllocation: function (item) {
       this.jobItems.splice(this.jobItems.indexOf(this.jobItems.find(i => i.id === item.id)), 1)
+      this.confirmationShow = false
     }
   }
 }

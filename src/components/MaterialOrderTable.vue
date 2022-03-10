@@ -4,7 +4,7 @@
       style="font-size: .6rem;
       border: 1px solid rgba(0,0,0,.4)">
     <thead>
-      <tr id="table-head">
+      <tr id="table-head" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
         <th>#</th>
         <th style="max-width: 3rem">Allocation Type</th>
         <th style="max-width: 4rem">Type</th>
@@ -43,6 +43,7 @@
         <th style="max-width: 2rem">% Allocation</th>
         <th style="max-width: 2rem">Qty Lines</th>
         <th style="max-width: 3rem">Last Shipment In</th>
+        <th style="max-width: 1rem"></th>
       </tr>
 
       <material-order-job-item
@@ -58,6 +59,7 @@
           @update-job-item="updateJobItem"
           @set-allocated-cost="$emit('set-allocated-cost')"
           @set-quantity="setQtyFulfilled"
+          @set-updated="setUpdated"
       >
       </material-order-job-item>
 
@@ -88,11 +90,13 @@ export default {
 
   },
 
-  updated(){
 
-  },
 
   methods: {
+
+    setUpdated: function (bool){
+      this.$emit('set-updated', bool)
+    },
 
     setAllLocked: function (){
       this.locked = !this.locked
