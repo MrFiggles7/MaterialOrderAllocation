@@ -179,6 +179,14 @@ export default {
       this.checkJobItems = false;
     },
 
+    resetVariables: function (){
+      this.selectedJob = null;
+      this.selectedAllocationType = null;
+      this.selectedType = null;
+      this.jobItemList.forEach((item)=>{
+        item.checked = false;
+      })
+    },
 
     selectAll: function (bool){
       this.jobItemList.forEach((item)=>{
@@ -234,6 +242,7 @@ export default {
     show: function (){
       if(this.show === false){
         this.resetErrors();
+        this.resetVariables();
       }
       this.showRef = this.show;
     }
