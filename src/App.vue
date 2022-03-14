@@ -138,7 +138,7 @@ export default {
       qtyLines: 4,
 
       typeList: [
-        {value: null, text: 'Supplied Material Type'},
+        {value: null, text: 'Select...'},
         'FABs',
         'Other',
         'Parts',
@@ -147,7 +147,7 @@ export default {
       ],
 
       allocationTypeList: [
-        {value: null, text: 'Allocation Type'},
+        {value: null, text: 'Select...'},
         'Inventory',
         'Job'
       ],

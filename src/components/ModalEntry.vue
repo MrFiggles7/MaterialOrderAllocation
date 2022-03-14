@@ -11,6 +11,9 @@
                    for="this-selected-job">
               Job Must Be selected
             </label>
+            <label class="m-0 pl-2" for="this-selected-job">
+              Job:
+            </label>
             <b-form-select
                 class="mb-4"
                 id="this-selected-job"
@@ -26,6 +29,9 @@
                    for="this-selected-allocation">
               Allocation must be selected
             </label>
+            <label class="m-0 pl-2" for="this-selected-allocation">
+              Allocation Type:
+            </label>
             <b-form-select
                 class="mb-4"
                 id="this-selected-allocation"
@@ -40,6 +46,9 @@
                     position: absolute; top: -40%;"
                    for="this-selected-material">
               Allocation must be selected
+            </label>
+            <label class="m-0 pl-2" for="this-selected-material">
+              Material Type:
             </label>
             <b-form-select
                 id="this-selected-material"
@@ -63,7 +72,9 @@
               </label>
               <b-card-header class="p-0 clearfix" style="background-color: inherit">
                 Open Job Items
-                <a @click="selectAll" href="#" style="font-size: .6rem; float: right">Select All</a>
+                <a v-if="!allSelected" @click="selectAll(true)" href="#" style="font-size: .6rem; float: right">Select All</a>
+                <a v-if="allSelected" @click="selectAll(false)" href="#" style="font-size: .6rem; float: right">UnSelect All</a>
+
               </b-card-header>
               <b-card-body>
                 <b-form-checkbox
@@ -169,10 +180,11 @@ export default {
     },
 
 
-    selectAll: function (){
+    selectAll: function (bool){
       this.jobItemList.forEach((item)=>{
-        item.checked = true
+        item.checked = bool
       })
+      this.allSelected = bool
     },
 
     createNewMaterialAllocation: function (){
@@ -239,8 +251,10 @@ export default {
       selectAllocationType: false,
       selectMaterialType: false,
 
+      allSelected: false,
+
       jobsList: [
-        {value: null, text: 'Please select a Job'},
+        {value: null, text: 'Select...'},
           'TPS-40961-A',
           'TPS-40961-A',
           'TPS-40961-A',
