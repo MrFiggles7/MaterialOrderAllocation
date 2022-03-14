@@ -2,73 +2,101 @@
   <table
       class="table text-left m-0"
       style="font-size: .6rem;
-      border: 1px solid rgba(0,0,0,.4)">
+      border-collapse: separate;
+      border-spacing: 0;
+      border: 1px solid rgba(0,0,0,.4);"
+  >
     <thead>
-      <tr id="table-head" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
-        <th>#</th>
-        <th style="max-width: 3rem">Allocation Type</th>
-        <th style="max-width: 4rem">Type</th>
-        <th style="max-width: 5rem">Job Item</th>
-        <th style="max-width: 2rem; min-width: 2rem">
-          <div style="display: inline-block; vertical-align: sub;">
-            JI Qty
-          </div>
-          <b-button
-              class="table-button"
-              size="sm"
-              variant="outline-secondary"
-              @click="setAllJobQty"
-          >
-            <b-icon scale=".75" icon="chevron-double-right"></b-icon>
-          </b-button>
-        </th>
-        <th style="max-width: 3rem">
-          Qty Fulfilled
-          <b-button @click="setAllLocked" class="table-button" size="sm" variant="outline-secondary">
-            <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
-          </b-button>
-        </th>
-        <th style="max-width: 2rem">
-          $ Allocation
-          <b-button
-              class="table-button"
-              style="border: none"
-              size="sm"
-              variant="outline-light"
-              @click="setCostAllocation"
-          >
-            <b-icon variant="success" scale=".75" icon="arrow-clockwise"></b-icon>
-          </b-button>
-        </th>
-        <th style="max-width: 2rem">% Allocation</th>
-        <th style="max-width: 2rem">Qty Lines</th>
-        <th style="max-width: 3rem">Last Shipment In</th>
-        <th style="max-width: 1rem"></th>
-      </tr>
+    <tr id="table-head" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
+      <th>#</th>
+      <th style="min-width: 6rem">Allocation Type</th>
+      <th style="min-width: 8rem">Type</th>
+      <th style="">Job Item</th>
+      <th style="">
+        <b-row class="m-0">
+          <b-col cols="12" lg="6" class="p-0 w-100">
+            <div v-b-tooltip.hover
+                 title="Job Item Qty"
+                 style="display: inline-block; vertical-align: sub;">
+              JI Qty
+            </div>
+          </b-col>
+          <b-col class="p-0">
+            <b-button
+                class="table-button w-100"
+                size="sm"
+                variant="outline-secondary"
+                @click="setAllJobQty"
+            >
+              <b-icon scale=".75" icon="chevron-double-right"></b-icon>
+            </b-button>
+          </b-col>
+        </b-row>
+      </th>
+      <th >
+        <b-row class="m-0">
+          <b-col cols="12" lg="6" class="p-0 text-right">
+            Qty Fulfilled
+          </b-col>
+          <b-col class="p-0">
+            <b-button @click="setAllLocked" class="table-button w-50" size="sm" variant="outline-secondary">
+              <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
+            </b-button>
+          </b-col>
+        </b-row>
 
-      <material-order-job-item
-          v-for="item in jobItems"
-          :key="item.id"
-          :item="item"
-          :index="jobItems.indexOf(item) + 1"
-          :typeList="typeList"
-          :allocationTypeList="allocationTypeList"
-          :totalCost="totalCost"
-          ref="item"
-          @delete="$emit('delete', item)"
-          @update-job-item="updateJobItem"
-          @set-allocated-cost="$emit('set-allocated-cost')"
-          @set-quantity="setQtyFulfilled"
-          @set-updated="setUpdated"
-      >
-      </material-order-job-item>
+
+      </th>
+      <th
+          v-b-tooltip.hover
+          title="Cost Allocation: $"
+          style="max-width: 3rem"
+          class="text-right">
+        $ Allocation
+      </th>
+      <th
+          v-b-tooltip.hover
+          title="Cost Allocation: %"
+          class="text-right">% Allocation</th>
+      <th class="text-right">Qty Lines</th>
+      <th style="" colspan="2">Last Shipment In</th>
+
+    </tr>
+
 
     </thead>
+    <tbody>
+    <material-order-job-item
+        v-for="item in jobItems"
+        :key="item.jobItem.id"
+        :item="item"
+        :index="item.id"
+        :typeList="typeList"
+        :allocationTypeList="allocationTypeList"
+        :totalCost="totalCost"
+        ref="item"
+        @delete="$emit('delete', item)"
+        @update-job-item="updateJobItem"
+        @set-allocated-cost="$emit('set-allocated-cost')"
+        @set-quantity="setQtyFulfilled"
+        @set-updated="setUpdated"
+    >
+    </material-order-job-item>
+<!--    <tr class="table-body">-->
+<!--      <td colspan="4" style="border-right: none"></td>-->
+<!--      <td class="text-right pr-1" style="border-right: none">Allocated:</td>-->
+<!--      <td class="pl-2" style="border-right: none">{{totalQtyFulfilled}}</td>-->
+<!--      <td class="pl-1" style="border-right: none">$ {{totalAllocatedCost}}</td>-->
+<!--      <td class="pl-2" style="border-right: none"></td>-->
+<!--      <td colspan="3"></td>-->
+<!--    </tr>-->
+    </tbody>
   </table>
 </template>
 
 <script>
 import MaterialOrderJobItem from "./MaterialOrderJobItem";
+
 export default {
   name: "MaterialOrderTable",
   components: {MaterialOrderJobItem},
@@ -87,51 +115,65 @@ export default {
   },
 
   computed: {
+    totalQtyFulfilled: function (){
+      let total = 0;
+      this.jobItems.forEach((item)=>{
+        total += item.qtyFulfilled
+      })
+      return total;
+    },
+
+    totalAllocatedCost: function (){
+      let total = 0;
+      this.jobItems.forEach((item)=>{
+        total += item.costAllocation
+      })
+      return total
+    },
 
   },
 
 
-
   methods: {
 
-    setUpdated: function (bool){
+    setUpdated: function (bool) {
       this.$emit('set-updated', bool)
     },
 
-    setAllLocked: function (){
+    setAllLocked: function () {
       this.locked = !this.locked
-      this.$refs.item.forEach((item)=>{
+      this.$refs.item.forEach((item) => {
         item.locked = this.locked
       })
     },
 
-    setQtyFulfilled: function (item, qty){
+    setQtyFulfilled: function (item, qty) {
       this.$emit('set-quantity', item, qty)
     },
-    setCostAllocation: function (jobItem){
+    setCostAllocation: function (jobItem) {
       this.$emit('set-cost-allocation', jobItem)
     },
 
-    updateJobItem: function (jobItemRef){
+    updateJobItem: function (jobItemRef) {
       this.$emit('update-job-item', jobItemRef)
     },
 
-    costAllocationMethod: function (item){
+    costAllocationMethod: function (item) {
       let total = 0;
-      this.jobItems.forEach((item)=> {
-        if(item.qtyFulfilled){
+      this.jobItems.forEach((item) => {
+        if (item.qtyFulfilled) {
           total += item.qtyFulfilled
         }
       })
       return parseFloat((this.totalCost * (item.qtyFulfilled / total)).toFixed(2));
     },
 
-    setAllJobQty: function (){
+    setAllJobQty: function () {
       // this.jobItems.forEach((jobItem)=>{
       //   jobItem.qtyFulfilled = jobItem.jobItemQty;
       // })
 
-      this.$refs.item.forEach((i)=>{
+      this.$refs.item.forEach((i) => {
         i.setQtyFulfilled()
       })
     }
@@ -140,18 +182,18 @@ export default {
 </script>
 
 <style scoped>
-.table td, .table th{
+.table td, .table th {
   word-break: break-word;
   vertical-align: inherit;
   padding: .25rem .25rem;
-  border-right: 1px solid rgba(0,0,0, .2);
+  border-right: 1px solid rgba(0, 0, 0, .2);
 }
 
-.table thead th{
+.table thead th {
   vertical-align: middle;
 }
 
-.table-button{
+.table-button {
   padding: 0;
   float: right
 }
@@ -166,7 +208,7 @@ export default {
   line-height: inherit;
   color: inherit;
   background-color: inherit;
-  border: 1px solid rgba(0,0,0, .4);
+  border: 1px solid rgba(0, 0, 0, .4);
   border-radius: inherit;
   transition: none;
 }

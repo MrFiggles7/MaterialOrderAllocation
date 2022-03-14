@@ -8,7 +8,7 @@
 
 
         <div class="right" style="float: right">
-          <b-button :disabled="updated ? false : true"  :variant="updated ? 'info' : 'light'" size="sm" class="mr-3">
+          <b-button :disabled="updated ? false : true"  :variant="updated ? 'success' : 'light'" size="sm" class="mr-3">
             Save Changes
             <b-icon :variant="updated ? 'light' : 'dark'" icon="arrow-clockwise"></b-icon>
           </b-button>
@@ -21,7 +21,7 @@
 
       <material-order-table
           ref="table"
-          :job-items="jobItems"
+          :job-items="materialOrderItems"
           :typeList="typeList"
           :totalCost="totalCost"
           :allocationTypeList="allocationTypeList"
@@ -34,7 +34,7 @@
       >
       </material-order-table>
       <div style="float: right;" class="mt-1">
-        <b-button @click="handleSplit" variant="success" size="sm">
+        <b-button @click="handleSplit" variant="info" size="sm">
           Allocate
           <b-icon class="ml-2" icon="arrow-left-right"></b-icon>
         </b-button>
@@ -56,12 +56,13 @@
             Are you Sure?
           </div>
         </template>
+
+        <span>Delete This Material Allocation?</span><br>
+        {{ deletableItem.jobItem.name }}
         <template #modal-footer>
           <b-button class="mr-auto" variant="secondary" @click="confirmationShow = false">Cancel</b-button>
           <b-button variant="danger" @click="deleteMaterialAllocation(deletableItem)">Delete</b-button>
         </template>
-        <span>Delete This Material Allocation?</span><br>
-        {{ deletableItem.jobItem }}
       </b-modal>
     </b-container>
   </div>
@@ -72,6 +73,8 @@
 
 import MaterialOrderTable from "./components/MaterialOrderTable";
 import ModalEntry from "./components/ModalEntry";
+import {MaterialOrderItem} from "./Models/MaterialOrderItem";
+// import axios from 'axios';
 
 export default {
   name: 'App',
@@ -87,6 +90,15 @@ export default {
   },
 
   mounted() {
+    // axios calls to get all existing job items and
+    // set the type and allocation type lists
+
+    this.getMaterialOrderItems()
+    // this.setTypeList()
+    // this.setAllocationTypeList()
+
+
+
     this.setAllocatedCost()
     this.setPercentAllocation()
 
@@ -115,7 +127,9 @@ export default {
       confirmationShow: false,
       updated: false,
       deletableItem: {
-        jobItem: null
+        jobItem: {
+          name: null
+        }
       },
 
       materialOrderId: null,
@@ -138,14 +152,18 @@ export default {
         'Job'
       ],
 
-      jobItems: [
+      materialOrderItems: [
         {
           id: Math.random(),
           type: 'Parts',
           allocationType: 'Inventory',
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 3,
-          qtyFulfilled: 2,
+          jobItem: {
+            id: Math.random(),
+            name: 'TPS-30961-A_2022-02-15',
+            qty: 3,
+          },
+
+          qtyFulfilled: null,
           costAllocation: 0,
           qtyLines: 4,
           lastShipmentIn: this.getDate()
@@ -154,8 +172,12 @@ export default {
           id: Math.random(),
           type: 'Parts',
           allocationType: 'Inventory',
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 2,
+          jobItem: {
+            id: Math.random(),
+            name: 'TPS-30961-A_2022-02-15',
+            qty: 3,
+          },
+
           qtyFulfilled: 5,
           costAllocation: 0,
           qtyLines: 4,
@@ -165,8 +187,12 @@ export default {
           id: Math.random(),
           type: 'Parts',
           allocationType: 'Inventory',
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 1,
+          jobItem: {
+            id: Math.random(),
+            name: 'TPS-30961-A_2022-02-15',
+            qty: 3,
+          },
+
           qtyFulfilled: 1,
           costAllocation: 0,
           qtyLines: 4,
@@ -176,8 +202,12 @@ export default {
           id: Math.random(),
           type: 'Parts',
           allocationType: 'Inventory',
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 4,
+          jobItem: {
+            id: Math.random(),
+            name: 'TPS-30961-A_2022-02-15',
+            qty: 3,
+          },
+
           qtyFulfilled: 3,
           costAllocation: 0,
           qtyLines: 4,
@@ -187,8 +217,12 @@ export default {
           id: Math.random(),
           type: 'Parts',
           allocationType: 'Inventory',
-          jobItem: 'TPS-30961-A_2022-02-15',
-          jobItemQty: 7,
+          jobItem: {
+            id: Math.random(),
+            name: 'TPS-30961-A_2022-02-15',
+            qty: 3,
+          },
+
           qtyFulfilled: 6,
           costAllocation: 0,
           qtyLines: 4,
@@ -202,14 +236,56 @@ export default {
   computed: {
     totalAllocatedCost: function (){
       let total = 0;
-      this.jobItems.forEach((item)=>{
+      this.materialOrderItems.forEach((item)=>{
         total += item.costAllocation
       })
-      return total
+      if(total === 0 || total.toFixed(2) === this.totalCost.toFixed(2)){
+        return total.toFixed(0)
+      }
+      return total.toFixed(2)
     }
   },
 
   methods: {
+    getMaterialOrderItems: function (){
+        // Axios call to get all job items for Material Order
+        // axios.get(this.baseURL + 'address/random_address', {
+        //   params: {id: this.materialOrderId}
+        // }).then((response)=>{
+        //   this.materialOrderItems = response
+        // })
+      let arr = [];
+      this.materialOrderItems.forEach((item)=>{
+        arr.push(new MaterialOrderItem(
+            item.id,
+            item.type,
+            item.allocationType,
+            item.jobItem,
+            item.qtyFulfilled,
+            item.costAllocation,
+            item.qtyLines,
+            item.lastShipmentIn,
+        ))
+      })
+      this.materialOrderItems = arr;
+    },
+    //
+    // setTypeList: function (){
+    //   axios.get(this.baseURL + '').then((response)=>{
+    //     this.typeList = response
+    //   })
+    // },
+    //
+    // setAllocationTypeList: function() {
+    //   axios.get(this.baseURL + '').then((response)=>{
+    //     this.allocationTypeList = response
+    //   })
+    // },
+
+
+
+
+
     setUpdated: function (bool){
       this.updated = bool
     },
@@ -229,13 +305,13 @@ export default {
     setPercentAllocation: function (){
       let vm = this;
       this.$refs.table.$refs.item.forEach((item)=>{
-        item.percentAllocation = ((vm.jobItems[vm.jobItems.indexOf(item.item)].costAllocation / vm.totalCost) * 100).toFixed(2)
+          item.percentAllocation = ((vm.materialOrderItems[vm.materialOrderItems.indexOf(item.item)].costAllocation / vm.totalCost) * 100).toFixed(2)
       })
     },
 
     setAllocatedCost: function () {
       let cost = 0;
-      this.jobItems.forEach((item) => {
+      this.materialOrderItems.forEach((item) => {
         if (item.costAllocation) {
           let itemRef = this.$refs.table.$refs.item.find(i => i.id === item.id)
           if (itemRef.locked) {
@@ -251,7 +327,7 @@ export default {
       if (qty == null) {
         let jobItem = this.$refs.table.$refs.item.find(i => i.id === item.id)
         if (jobItem.locked === false) {
-          item.qtyFulfilled = item.jobItemQty;
+          item.qtyFulfilled = item.jobItem.qty;
           this.updateJobItem(item)
         }
       } else {
@@ -262,9 +338,9 @@ export default {
 
     updateJobItem: function (jobItem) {
 
-      if (this.jobItems.find(j => j.id === jobItem.id) !== jobItem) {
+      if (this.materialOrderItems.find(j => j.id === jobItem.id) !== jobItem) {
         console.log('updated', jobItem)
-        this.$set(this.jobItems, this.jobItems.indexOf(this.jobItems.find(i => i.id === jobItem.id)), jobItem)
+        this.$set(this.materialOrderItems, this.materialOrderItems.indexOf(this.materialOrderItems.find(i => i.id === jobItem.id)), jobItem)
       } else {
         return false
       }
@@ -274,9 +350,9 @@ export default {
     setCostAllocation: function () {
       console.log('setting cost allocation')
 
-      if (this.jobItems) {
+      if (this.materialOrderItems) {
         let refArr = [];
-        this.jobItems.forEach((jobItem)=>{
+        this.materialOrderItems.forEach((jobItem)=>{
           let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id);
 
           if(item.locked !== true){
@@ -340,7 +416,7 @@ export default {
     calculateCostAllocation: function (jobItem) {
       let total = 0;
 
-      this.jobItems.forEach((item) => {
+      this.materialOrderItems.forEach((item) => {
         if (item.qtyFulfilled && !(this.$refs.table.$refs.item.find(i => i.id === item.id).locked)) {
           total += item.qtyFulfilled
         }
@@ -357,24 +433,25 @@ export default {
 
     resetDeletableItem: function () {
       this.deletableItem = {
-        jobItem: null
+        jobItem: {
+          name: null,
+        }
       }
     },
 
     createNewMaterialAllocation: function (arr) {
       console.log(arr)
       arr.data.forEach((item) => {
-        this.jobItems.push({
-          id: item.id,
-          type: arr.type,
-          allocationType: arr.allocationType,
-          jobItem: item.name,
-          jobItemQty: 2,
-          qtyFulfilled: null,
-          costAllocation: null,
-          qtyLines: this.qtyLines,
-          lastShipmentIn: this.getDate(),
-        })
+        this.materialOrderItems.push(new MaterialOrderItem(
+            Math.random(),
+            arr.type,
+            arr.allocationType,
+            item,
+            0,
+            0,
+            this.qtyLines,
+            this.getDate(),
+        ))
       })
     },
 
@@ -388,7 +465,7 @@ export default {
     },
 
     deleteMaterialAllocation: function (item) {
-      this.jobItems.splice(this.jobItems.indexOf(this.jobItems.find(i => i.id === item.id)), 1)
+      this.materialOrderItems.splice(this.materialOrderItems.indexOf(this.materialOrderItems.find(i => i.id === item.id)), 1)
       this.confirmationShow = false
     }
   }

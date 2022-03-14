@@ -3,43 +3,82 @@
     <b-row class="p-5">
       <b-col>
         <b-form>
-          <b-form-select
-              class="mb-4"
-              v-model="selectedJob"
-              :options="jobsList"
-          ></b-form-select>
-          <b-form-select
-              class="mb-4"
-              v-model="selectedAllocationType"
-              :options="allocationTypeList"
-          ></b-form-select>
-          <b-form-select
-              v-model="selectedType"
-              :options="typeList"
-          ></b-form-select>
+          <div style="position: relative">
+            <label v-if="selectJob"
+                    style="font-size: .6rem;
+                    color: red;
+                    position: absolute; top: -25%;"
+                   for="this-selected-job">
+              Job Must Be selected
+            </label>
+            <b-form-select
+                class="mb-4"
+                id="this-selected-job"
+                v-model="selectedJob"
+                :options="jobsList"
+            ></b-form-select>
+          </div>
+          <div style="position: relative">
+            <label v-if="selectAllocationType"
+                    style="font-size: .6rem;
+                    color: red;
+                    position: absolute; top: -25%;"
+                   for="this-selected-allocation">
+              Allocation must be selected
+            </label>
+            <b-form-select
+                class="mb-4"
+                id="this-selected-allocation"
+                v-model="selectedAllocationType"
+                :options="allocationTypeList"
+            ></b-form-select>
+          </div>
+          <div style="position: relative">
+            <label v-if="selectMaterialType"
+                   style="font-size: .6rem;
+                    color: red;
+                    position: absolute; top: -40%;"
+                   for="this-selected-material">
+              Allocation must be selected
+            </label>
+            <b-form-select
+                id="this-selected-material"
+                v-model="selectedType"
+                :options="typeList"
+            ></b-form-select>
+          </div>
+
         </b-form>
       </b-col>
       <b-col>
-          <b-card v-if="selectedJob !== null">
-            <b-card-header class="p-0 clearfix" style="background-color: inherit">
-              Open Job Items
-              <a @click="selectAll" href="#" style="font-size: .6rem; float: right">Select All</a>
-            </b-card-header>
-            <b-card-body>
-              <b-form-checkbox
-                  v-for="item in jobItemList"
-                  :key="item.id"
+          <div style="position: relative">
+            <b-card style="position: relative" id="this-checked-jobitems" v-if="selectedJob !== null">
+              <label v-if="checkJobItems"
+                     style="font-size: .6rem;
+                    color: red;
+                    position: absolute; top: -7%; left: 0"
+                     for="this-checked-jobitems"
+                     >
+                Job Item(s) Must be Checked
+              </label>
+              <b-card-header class="p-0 clearfix" style="background-color: inherit">
+                Open Job Items
+                <a @click="selectAll" href="#" style="font-size: .6rem; float: right">Select All</a>
+              </b-card-header>
+              <b-card-body>
+                <b-form-checkbox
+                    v-for="item in jobItemList"
+                    :key="item.id"
 
-                  v-model="item.checked"
+                    v-model="item.checked"
 
-              >
-                {{item.name}}
-              </b-form-checkbox>
-            </b-card-body>
-            <b-card-footer class="p-0 clearfix" style="background-color: inherit">
-              <a href="#" style="font-size: .6rem; float: right">Show More</a>
-            </b-card-footer>
-          </b-card>
+                >
+                  {{item.name}}
+                </b-form-checkbox>
+              </b-card-body>
+            </b-card>
+          </div>
+
       </b-col>
     </b-row>
 
@@ -59,7 +98,7 @@
             variant="primary"
             size="sm"
             class="float-right"
-            @click="createNewMaterialAllocation"
+            @click="validate"
         >
           Add Material Allocation
         </b-button>
@@ -69,10 +108,67 @@
 </template>
 
 <script>
+// import axios from "axios";
+
 export default {
   name: "ModalEntry",
 
+  mounted(){
+    // Get All Open Jobs
+    // this.jobList = [];
+    // axios.get(this.baseURL + '').then((response)=>{
+    //     response.forEach((res)=>{
+    //       this.jobList.push(
+    //           res
+    //       )
+    //     })
+    // })
+  },
+
   methods: {
+    validate: function (){
+      if(!this.selectedJob){
+        this.selectJob = true;
+      }
+      else{
+        this.selectJob = false;
+      }
+      if(!this.selectedAllocationType){
+        this.selectAllocationType = true;
+      }
+      else{
+        this.selectAllocationType = false;
+      }
+      if(!this.selectedType){
+        this.selectMaterialType = true;
+      }
+      else{
+        this.selectMaterialType = false;
+      }
+      if(!this.jobItemList.some(i=>i.checked === true)){
+        if(this.selectedJob){
+          this.checkJobItems = true
+        }
+      }
+      else{
+        this.checkJobItems = false;
+      }
+      if(!this.selectJob
+          && !this.selectMaterialType
+          && !this.selectAllocationType
+          && !this.checkJobItems){
+        this.createNewMaterialAllocation();
+      }
+    },
+
+    resetErrors: function (){
+      this.selectJob = false;
+      this.selectAllocationType = false;
+      this.selectMaterialType = false;
+      this.checkJobItems = false;
+    },
+
+
     selectAll: function (){
       this.jobItemList.forEach((item)=>{
         item.checked = true
@@ -80,8 +176,18 @@ export default {
     },
 
     createNewMaterialAllocation: function (){
+      let refArr = [];
+      this.jobItemList.forEach((item)=>{
+        if(item.checked){
+          refArr.push({
+            id: item.id,
+            name: item.name,
+            qty: item.qty
+          })
+        }
+      })
       let jobList = {
-        data: this.jobItemList.filter(j => j.checked === true),
+        data: refArr,
         type: this.selectedType,
         allocationType: this.selectedAllocationType,
       }
@@ -92,11 +198,31 @@ export default {
   },
 
   watch: {
+    selectedJob: function (){
+
+      // Set JobItemList After Job Is Picked
+      // this.jobItemList = [];
+      // axios.get(this.baseURL + '').then((response)=>{
+      //   response.forEach((res)=>{
+      //     this.jobItemList.push(
+      //         {
+      //           id: res.id,
+      //           name: res.name,
+      //           checked: false,
+      //         }
+      //     )
+      //   })
+      // })
+    },
+
     showRef: function (){
       this.$emit('update-show', this.showRef)
     },
 
     show: function (){
+      if(this.show === false){
+        this.resetErrors();
+      }
       this.showRef = this.show;
     }
   },
@@ -107,6 +233,12 @@ export default {
       selectedType: null,
       selectedAllocationType: null,
       showRef: false,
+
+      checkJobItems: false,
+      selectJob: false,
+      selectAllocationType: false,
+      selectMaterialType: false,
+
       jobsList: [
         {value: null, text: 'Please select a Job'},
           'TPS-40961-A',
@@ -130,31 +262,37 @@ export default {
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         },
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         },
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         },
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         },
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         },
         {
           id: Math.random(),
           name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
           checked: false,
         }
       ],
@@ -169,6 +307,7 @@ export default {
     show: Boolean,
     typeList: Array,
     allocationTypeList: Array,
+    baseURL: String,
   }
 }
 </script>
