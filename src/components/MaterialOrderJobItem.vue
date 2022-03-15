@@ -1,10 +1,10 @@
 <template>
-  <tr class="table-body" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
+  <tr class="table-body" :style="borderBackgroundColor">
     <td style="width: 3rem" :style="updated ? '' : ''">{{ index }}</td>
     <td
         class="text-center"
         style=""
-        :style="updated ? '' : ''"
+
     >
       <b-select
           class="pl-1"
@@ -90,8 +90,9 @@
 
     >
       <b-row class="m-0">
-        <b-col cols="12" lg="12" class="p-0">
-          <span v-b-tooltip.topleft="{customClass: 'tooltip'}" :title="!jobItemQtyMatch ? 'Job Item Qty & Qty fulfilled are not equivalent' : ''">
+        <b-col cols="11" lg="11" class="p-0">
+          <span v-b-tooltip.topleft="{customClass: 'tooltip'}"
+                :title="!jobItemQtyMatch ? 'Job Item Qty & Qty fulfilled are not equivalent' : ''">
             <b-input
                 :style="!jobItemQtyMatch ? borderBlue : ''"
                 :disabled="locked ? true : false"
@@ -105,31 +106,31 @@
           </span>
 
         </b-col>
-<!--        <b-col class="p-0">-->
-<!--          <div>-->
-<!--&lt;!&ndash;            <b-icon&ndash;&gt;-->
-<!--&lt;!&ndash;                v-b-tooltip.hover&ndash;&gt;-->
-<!--&lt;!&ndash;                title="Job Item Qty and Qty fulfilled are not equivalent"&ndash;&gt;-->
-<!--&lt;!&ndash;                v-b-hover="iconHover"&ndash;&gt;-->
-<!--&lt;!&ndash;                class="ml-lg-2"&ndash;&gt;-->
-<!--&lt;!&ndash;                :variant="iconHovered ? 'secondary' : 'primary'"&ndash;&gt;-->
-<!--&lt;!&ndash;                v-if="!jobItemQtyMatch"&ndash;&gt;-->
-<!--&lt;!&ndash;                icon="info-circle"&ndash;&gt;-->
-<!--&lt;!&ndash;                font-scale="2"&ndash;&gt;-->
-<!--&lt;!&ndash;            >&ndash;&gt;-->
-<!--&lt;!&ndash;            </b-icon>&ndash;&gt;-->
-<!--            <b-button @click="locked = !locked" class="table-button w-75" size="sm" variant="outline-dark">-->
-<!--              <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>-->
-<!--            </b-button>-->
-<!--          </div>-->
-<!--        </b-col>-->
+        <!--        <b-col class="p-0">-->
+        <!--          <div>-->
+        <!--&lt;!&ndash;            <b-icon&ndash;&gt;-->
+        <!--&lt;!&ndash;                v-b-tooltip.hover&ndash;&gt;-->
+        <!--&lt;!&ndash;                title="Job Item Qty and Qty fulfilled are not equivalent"&ndash;&gt;-->
+        <!--&lt;!&ndash;                v-b-hover="iconHover"&ndash;&gt;-->
+        <!--&lt;!&ndash;                class="ml-lg-2"&ndash;&gt;-->
+        <!--&lt;!&ndash;                :variant="iconHovered ? 'secondary' : 'primary'"&ndash;&gt;-->
+        <!--&lt;!&ndash;                v-if="!jobItemQtyMatch"&ndash;&gt;-->
+        <!--&lt;!&ndash;                icon="info-circle"&ndash;&gt;-->
+        <!--&lt;!&ndash;                font-scale="2"&ndash;&gt;-->
+        <!--&lt;!&ndash;            >&ndash;&gt;-->
+        <!--&lt;!&ndash;            </b-icon>&ndash;&gt;-->
+        <!--            <b-button @click="locked = !locked" class="table-button w-75" size="sm" variant="outline-dark">-->
+        <!--              <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>-->
+        <!--            </b-button>-->
+        <!--          </div>-->
+        <!--        </b-col>-->
 
       </b-row>
 
 
     </td>
     <td
-      class="text-center"
+        class="text-center"
     >
       <b-row class="m-0 p-0 ">
         <span style="vertical-align: text-top">$&nbsp;</span>
@@ -140,7 +141,6 @@
             step=".01"
             type="number"
             class="text-right p-0 pr-1"
-            min="0.00"
             ref="costAllocationInput"
             @blur="setCostAllocation"
             :value="costAllocationDecimal"
@@ -155,29 +155,29 @@
         class="text-center">
       {{ percentAllocation || 0 }}&nbsp;%
     </td>
-<!--    <td-->
-<!--        :style="updated ? '' : ''"-->
-<!--        style="max-width: 2rem">-->
-<!--      <b-input-->
-<!--          style="vertical-align: text-top;"-->
-<!--          type="number"-->
-<!--          class="w-100 text-right"-->
-<!--          v-model="qtyLines"-->
-<!--      >-->
-<!--      </b-input>-->
-<!--    </td>-->
-<!--    <td-->
-<!--        :style="updated ? '' : ''"-->
-<!--        style=" border-right: none">-->
-<!--      <b-select-->
-<!--          plain-->
-<!--          class="pl-1"-->
-<!--          :disabled="locked ? true : false"-->
-<!--          :options="shipmentList"-->
-<!--          v-model="lastShipmentIn"-->
-<!--      >-->
-<!--      </b-select>-->
-<!--    </td>-->
+    <!--    <td-->
+    <!--        :style="updated ? '' : ''"-->
+    <!--        style="max-width: 2rem">-->
+    <!--      <b-input-->
+    <!--          style="vertical-align: text-top;"-->
+    <!--          type="number"-->
+    <!--          class="w-100 text-right"-->
+    <!--          v-model="qtyLines"-->
+    <!--      >-->
+    <!--      </b-input>-->
+    <!--    </td>-->
+    <!--    <td-->
+    <!--        :style="updated ? '' : ''"-->
+    <!--        style=" border-right: none">-->
+    <!--      <b-select-->
+    <!--          plain-->
+    <!--          class="pl-1"-->
+    <!--          :disabled="locked ? true : false"-->
+    <!--          :options="shipmentList"-->
+    <!--          v-model="lastShipmentIn"-->
+    <!--      >-->
+    <!--      </b-select>-->
+    <!--    </td>-->
     <td class="text-center">
       <b-button @click="locked = !locked" class="table-button w-100" size="sm" variant="outline-dark">
         <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
@@ -196,8 +196,18 @@
       >
         <b-icon variant="danger" scale="1" icon="trash"></b-icon>
       </b-button>
+      <b-icon
+          v-b-tooltip.hover
+          style="vertical-align: center !important"
+          title="Job Item has updates that need to be saved"
+          class="ml-lg-2 info-icon"
+          v-if="updated"
+          variant="primary"
+          icon="info-circle"
+          font-scale="2"
+      >
+      </b-icon>
     </td>
-
   </tr>
 </template>
 
@@ -209,6 +219,7 @@ export default {
     return {
       locked: false,
       updated: false,
+      iconHovered: false,
 
       id: null,
       type: null,
@@ -222,9 +233,6 @@ export default {
       selectedType: null,
       percentAllocation: 0,
 
-
-
-      iconHovered: false,
     }
   },
 
@@ -239,11 +247,22 @@ export default {
   },
 
   computed: {
-    isNegative: function (){
-      if(Math.sign(this.costAllocation) === -1){
-        return true
+    borderBackgroundColor: function () {
+      let style = ''
+      if (this.locked) {
+        style += 'background-color: rgba(0,0,0,.1);'
       }
-      else{
+      if (this.updated) {
+        style += ''
+      }
+      return style;
+    },
+
+
+    isNegative: function () {
+      if (Math.sign(this.costAllocation) === -1) {
+        return true
+      } else {
         return false
       }
     },
@@ -284,12 +303,15 @@ export default {
       handler() {
         this.resetItemRef()
         this.$emit('set-allocated-cost')
+        if (this.compareAllFields()) {
+          this.updateItem()
+        }
         // this.$emit('set-cost-allocation')
       }
     },
 
     locked: function () {
-      this.$emit('set-allocated-cost')
+      // this.$emit('set-allocated-cost')
     },
 
     type: function () {
@@ -337,17 +359,40 @@ export default {
   },
 
   methods: {
+    compareAllFields: function () {
+      if (this.lastShipmentIn !== this.item.lastShipmentIn) {
+        return true
+      } else if (this.qtyLines !== this.item.qtyLines) {
+        return true
+      } else if (this.costAllocation !== this.item.costAllocation) {
+        return true
+      } else if (this.qtyFulfilled !== this.item.qtyFulfilled) {
+        return true
+      } else if (this.type !== this.item.type) {
+        return true
+      } else if (this.allocationType !== this.item.allocationType) {
+        return true
+      }
+      return false;
+    },
 
-    updateItem: function (){
+    updateItem: function () {
+
       let objectRef = {...this.item};
 
       objectRef.type = this.type;
       objectRef.allocationType = this.allocationType;
 
       objectRef.qtyFulfilled = parseInt(this.qtyFulfilled);
-      objectRef.costAllocation = parseFloat(this.costAllocation);
+      if (this.costAllocation) {
+        objectRef.costAllocation = parseFloat(this.costAllocation);
+      } else {
+        objectRef.costAllocation = 0
+      }
       objectRef.qtyLines = parseInt(this.qtyLines);
       objectRef.lastShipmentIn = this.lastShipmentIn;
+
+
       // let objectRef = {
       //   id: this.id,
       //   type: this.type,
@@ -376,7 +421,12 @@ export default {
     //   ]
     // },
     setCostAllocation: function () {
-      this.costAllocation = this.$refs.costAllocationInput.$el.value;
+      if (this.$refs.costAllocationInput.$el.value === '' || this.$refs.costAllocationInput.$el.value === 0) {
+        this.costAllocation = null
+      } else {
+        this.costAllocation = this.$refs.costAllocationInput.$el.value;
+      }
+
     },
 
     resetItemRef: function () {
@@ -411,7 +461,7 @@ export default {
 </script>
 
 <style scoped>
-.tooltip{
+.tooltip {
   font-size: .6rem;
 }
 
@@ -479,5 +529,10 @@ input::-webkit-inner-spin-button {
 /* Firefox */
 input[type=number] {
   -moz-appearance: textfield;
+}
+
+.info-icon{
+  position: absolute;
+  transform: translateX(10px);
 }
 </style>

@@ -2,12 +2,13 @@
   <table
       class="table text-left m-0"
       style="font-size: .6rem;
-      border-collapse: separate;
+      width: 1108px;
+      border-collapse: collapse;
       border-spacing: 0;
       border: 1px solid rgba(0,0,0,.4);"
   >
     <thead>
-    <tr id="table-head" :style="locked ? 'background-color: rgba(255,0,0,.08)' : ''">
+    <tr id="table-head" :style="locked ? 'background-color: rgba(0,0,0,.1)' : ''">
       <th class="text-center" style="width: 4rem" v-b-tooltip.hover title="Material Order ID #">ID #</th>
       <th class="text-center" style="width: 5.5rem;">Allocation Type</th>
       <th class="text-center" style="width: 5.5rem;">Material Type</th>
@@ -26,6 +27,7 @@
           </b-col>
           <b-col class="p-0">
             <b-button
+                :disabled="locked ? true : false"
                 class="table-button w-100"
                 size="sm"
                 variant="outline-dark"
@@ -38,7 +40,7 @@
       </th>
       <th style="width: 4rem">
         <b-row class="m-0">
-          <b-col cols="12" lg="12" class="p-0 text-center align-self-center">
+          <b-col cols="11" lg="11" class="p-0 text-center align-self-center">
             Qty Fulfilled
           </b-col>
           <!--          <b-col class="p-0">-->
@@ -51,11 +53,9 @@
 
       </th>
       <th
-          v-b-tooltip.hover.left
-          title="Cost Allocation: $"
           style="width: 6rem"
           class="text-center">
-        $ Allocation
+        Cost Allocation: $
       </th>
       <th
           v-b-tooltip.hover.left
