@@ -10,9 +10,8 @@ export function MaterialOrderItemFactory(){
                 item.type || null,
                 item.allocationType || null,
                 item.jobItem || null,
-                item.jobItem.qty || null,
+                null,
                 item.costAllocation || 0,
-                item.percentAllocation || null,
                 item.qtyLines || null,
                 item.lastShipmentIn || null,
             ))

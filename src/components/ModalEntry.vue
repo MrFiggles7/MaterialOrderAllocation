@@ -1,13 +1,13 @@
 <template>
   <b-modal size="lg" v-model="showRef" centered id="modal-1" title="New Material Allocation">
-    <b-row class="p-5">
+    <b-row class="pl-5 pr-5 align-content-center" style="height: 23rem">
       <b-col>
         <b-form>
           <div style="position: relative">
             <label v-if="selectJob"
                     style="font-size: .6rem;
                     color: red;
-                    position: absolute; top: -25%;"
+                    position: absolute; bottom: 0%;"
                    for="this-selected-job">
               Job Must Be selected
             </label>
@@ -25,7 +25,7 @@
             <label v-if="selectAllocationType"
                     style="font-size: .6rem;
                     color: red;
-                    position: absolute; top: -25%;"
+                    position: absolute; bottom: 0%;"
                    for="this-selected-allocation">
               Allocation must be selected
             </label>
@@ -43,9 +43,9 @@
             <label v-if="selectMaterialType"
                    style="font-size: .6rem;
                     color: red;
-                    position: absolute; top: -40%;"
+                    position: absolute; bottom: -40%;"
                    for="this-selected-material">
-              Allocation must be selected
+              Material Type must be selected
             </label>
             <label class="m-0 pl-2" for="this-selected-material">
               Material Type:
@@ -59,18 +59,22 @@
 
         </b-form>
       </b-col>
-      <b-col>
+      <b-col class="p-0">
           <div style="position: relative">
-            <b-card style="position: relative" id="this-checked-jobitems" v-if="selectedJob !== null">
-              <label v-if="checkJobItems"
-                     style="font-size: .6rem;
+            <label v-if="checkJobItems"
+                   style="font-size: .6rem;
                     color: red;
-                    position: absolute; top: -7%; left: 0"
-                     for="this-checked-jobitems"
-                     >
-                Job Item(s) Must be Checked
-              </label>
-              <b-card-header class="p-0 clearfix" style="background-color: inherit">
+                    position: absolute; top: -5%; left: 2%"
+                   for="this-checked-jobitems"
+            >
+              Job Item(s) Must be Checked
+            </label>
+            <b-card
+                style="position: relative; overflow-y: scroll; max-height: 21rem"
+                id="this-checked-jobitems"
+                v-if="selectedJob !== null">
+
+              <b-card-header class="p-0 clearfix" style="background-color: inherit;">
                 Open Job Items
                 <a v-if="!allSelected" @click="selectAll(true)" href="#" style="font-size: .6rem; float: right">Select All</a>
                 <a v-if="allSelected" @click="selectAll(false)" href="#" style="font-size: .6rem; float: right">UnSelect All</a>
@@ -80,7 +84,6 @@
                 <b-form-checkbox
                     v-for="item in jobItemList"
                     :key="item.id"
-
                     v-model="item.checked"
 
                 >
@@ -276,7 +279,7 @@ export default {
           'TPS-40961-A',
           'TPS-40961-A',
           'TPS-40961-A',
-          'TPS-40961-A'
+          'TPS-40961-A',
       ],
 
 
@@ -317,7 +320,43 @@ export default {
           name: 'TPS-04961-A_2022-04-16',
           qty: 2,
           checked: false,
-        }
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
+        {
+          id: Math.random(),
+          name: 'TPS-04961-A_2022-04-16',
+          qty: 2,
+          checked: false,
+        },
       ],
     }
   },

@@ -3,15 +3,21 @@
     <b-container>
       <div class="header-bar clearfix mb-1">
         <div class="left" style="float: left">
-          Total Order Cost: {{totalAllocatedCost}} / {{totalCost}}
+          Total Order Cost: <span :style="overUnderAllocated ? 'color: red' : ''">{{totalAllocatedCost}}</span> / {{totalCost}}
         </div>
 
 
         <div class="right" style="float: right">
-          <b-button :disabled="updated ? false : true"  :variant="updated ? 'success' : 'light'" size="sm" class="mr-3">
+          <b-button :disabled="updatedAndNoNegatives ? false : true"
+                    :variant="updatedAndNoNegatives ? 'success' : 'light'"
+                    size="sm"
+                    class="mr-3"
+                    @click="handleSave"
+          >
             Save Changes
-            <b-icon :variant="updated ? 'light' : 'dark'" icon="arrow-clockwise"></b-icon>
+            <b-icon :variant="updatedAndNoNegatives ? 'light' : 'dark'" icon="upload"></b-icon>
           </b-button>
+
           <b-button @click="show = !show" variant="secondary" size="sm">
             Add New
             <b-icon variant="light" icon="plus"></b-icon>
@@ -25,6 +31,7 @@
           :typeList="typeList"
           :totalCost="totalCost"
           :allocationTypeList="allocationTypeList"
+          :shipmentList="shipmentList"
           @delete="handleDelete"
           @update-job-item="updateJobItem"
           @set-cost-allocation="setCostAllocation"
@@ -33,12 +40,25 @@
           @set-updated="setUpdated"
       >
       </material-order-table>
+      <div style="float: left;" class="mt-1">
+        <b-button variant="outline-danger" size="sm">
+          Reset Table Data
+          <b-icon class="ml-2" icon="arrow-clockwise"></b-icon>
+        </b-button>
+      </div>
+
+
       <div style="float: right;" class="mt-1">
+        <b-button class="mr-3" @click="handleDistribute" variant="outline-info" size="sm">
+          Distribute Remaining Dollars
+          <b-icon class="ml-2" icon="shuffle"></b-icon>
+        </b-button>
         <b-button @click="handleSplit" variant="info" size="sm">
-          Allocate
+          Allocate by Qty Fulfilled
           <b-icon class="ml-2" icon="arrow-left-right"></b-icon>
         </b-button>
       </div>
+
 
 
       <modal-entry
@@ -50,6 +70,8 @@
       </modal-entry>
 
 
+
+<!--      Delete Item Modal-->
       <b-modal header-class="text-center" body-class="text-center" v-model="confirmationShow">
         <template #modal-header>
           <div class="w-100 font-weight-bold" style="font-size: 1.4rem">
@@ -62,6 +84,23 @@
         <template #modal-footer>
           <b-button class="mr-auto" variant="secondary" @click="confirmationShow = false">Cancel</b-button>
           <b-button variant="danger" @click="deleteMaterialAllocation(deletableItem)">Delete</b-button>
+        </template>
+      </b-modal>
+
+
+<!--      //Save Changes Modal-->
+      <b-modal header-class="text-center" body-class="text-center" v-model="saveConfirmationShow">
+        <template #modal-header>
+          <div class="w-100 font-weight-bold" style="font-size: 1.4rem">
+            Are you Sure?
+          </div>
+        </template>
+
+        <span>Save These Changes to the Database?</span><br>
+        <span v-for="item in materialOrderItems" :key="item.id">{{item.jobItem.name}}<br></span>
+        <template #modal-footer>
+          <b-button class="mr-auto" variant="secondary" @click="saveConfirmationShow = false">Cancel</b-button>
+          <b-button variant="success" @click="saveChanges()">Save Changes</b-button>
         </template>
       </b-modal>
     </b-container>
@@ -84,15 +123,12 @@ export default {
   },
 
   watch: {
-    jobItems: function () {
 
-    }
   },
 
   mounted() {
     // axios calls to get all existing job items and
     // set the type and allocation type lists
-
     this.getMaterialOrderItems()
     // this.setTypeList()
     // this.setAllocationTypeList()
@@ -100,7 +136,7 @@ export default {
 
 
     this.setAllocatedCost()
-    this.setPercentAllocation()
+
 
     if(this.$refs.table.$refs.item.every(i => i.locked === true)){
       this.$refs.table.locked = true
@@ -110,9 +146,15 @@ export default {
     }
   },
 
+  created() {
+    this.setShipmentList()
+  },
+
   updated() {
     // this.setCostAllocation()
     // this.setAllocatedCost()
+    this.lifeCycleUpdated = true;
+
     if(this.$refs.table.$refs.item.every(i => i.locked === true)){
       this.$refs.table.locked = true
     }
@@ -125,7 +167,9 @@ export default {
     return {
       show: false,
       confirmationShow: false,
+      saveConfirmationShow: false,
       updated: false,
+      lifeCycleUpdated: false,
       deletableItem: {
         jobItem: {
           name: null
@@ -152,6 +196,8 @@ export default {
         'Job'
       ],
 
+      shipmentList: [],
+
       materialOrderItems: [
         {
           id: Math.random(),
@@ -164,7 +210,7 @@ export default {
           },
 
           qtyFulfilled: null,
-          costAllocation: 0,
+          costAllocation: 300,
           qtyLines: 4,
           lastShipmentIn: this.getDate()
         },
@@ -181,7 +227,7 @@ export default {
           qtyFulfilled: 5,
           costAllocation: 0,
           qtyLines: 4,
-          lastShipmentIn: this.getDate()
+          lastShipmentIn: new Date()
         },
         {
           id: Math.random(),
@@ -194,7 +240,7 @@ export default {
           },
 
           qtyFulfilled: 1,
-          costAllocation: 0,
+          costAllocation: 50.64,
           qtyLines: 4,
           lastShipmentIn: this.getDate()
         },
@@ -209,7 +255,7 @@ export default {
           },
 
           qtyFulfilled: 3,
-          costAllocation: 0,
+          costAllocation: 43.67,
           qtyLines: 4,
           lastShipmentIn: this.getDate()
         },
@@ -232,8 +278,45 @@ export default {
     }
   },
 
-
   computed: {
+    overUnderAllocated: function (){
+      if(this.totalAllocatedCost > this.totalCost
+          || this.totalAllocatedCost < this.totalCost){
+        return true
+      }
+      return false
+    },
+
+    isNegatives: function (){
+      let isNegative = false;
+      this.materialOrderItems.forEach((item)=>{
+        if(Math.sign(item.costAllocation) === -1){
+          isNegative = true;
+        }
+      })
+      if(isNegative){
+        return true
+      }
+      else{
+        return false
+      }
+    },
+
+    updatedAndNoNegatives: function (){
+      let isNegative = false;
+      this.materialOrderItems.forEach((item)=>{
+        if(Math.sign(item.costAllocation) === -1){
+          isNegative = true;
+        }
+      })
+      if(this.updated && !isNegative){
+        return true;
+      }
+      else{
+        return false;
+      }
+    },
+
     totalAllocatedCost: function (){
       let total = 0;
       this.materialOrderItems.forEach((item)=>{
@@ -256,6 +339,9 @@ export default {
         // })
       let arr = [];
       this.materialOrderItems.forEach((item)=>{
+        if(!this.shipmentList.includes(item.lastShipmentIn)){
+          item.lastShipmentIn = null;
+        }
         arr.push(new MaterialOrderItem(
             item.id,
             item.type,
@@ -282,9 +368,11 @@ export default {
     //   })
     // },
 
-
-
-
+    setShipmentList: function () {
+      this.shipmentList = [
+        this.getDate(),
+      ]
+    },
 
     setUpdated: function (bool){
       this.updated = bool
@@ -300,6 +388,42 @@ export default {
       this.setAllocatedCost()
       this.setCostAllocation()
       this.setPercentAllocation()
+    },
+
+    handleDistribute: function (){
+      this.setUpdated(true);
+      this.distributeRemainingDollars();
+      this.setPercentAllocation();
+    },
+
+    saveChanges: function (){
+
+    },
+
+    distributeRemainingDollars: function (){
+      if(this.materialOrderItems){
+        let refArr = [];
+        this.materialOrderItems.forEach((jobItem)=>{
+          let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id);
+
+          if(item.locked !== true){
+            refArr.push(jobItem)
+          }
+        })
+
+        let remainder = (this.totalCost - parseFloat(this.totalAllocatedCost))
+        let cost = Number((remainder / refArr.length).toString().match(/^\d+(?:\.\d{0,2})?/))
+
+        refArr.forEach((item)=>{
+          if(refArr.indexOf(item) !== refArr.length-1){
+            item.costAllocation += cost;
+            remainder -= cost;
+          }
+          else{
+            item.costAllocation += remainder;
+          }
+        })
+      }
     },
 
     setPercentAllocation: function (){
@@ -338,12 +462,14 @@ export default {
 
     updateJobItem: function (jobItem) {
 
-      if (this.materialOrderItems.find(j => j.id === jobItem.id) !== jobItem) {
+
         console.log('updated', jobItem)
+        if(jobItem !== this.materialOrderItems[this.materialOrderItems.indexOf(this.materialOrderItems.find(i=> i.id ===jobItem.id))] && this.lifeCycleUpdated){
+          this.$refs.table.$refs.item[this.materialOrderItems.indexOf(this.materialOrderItems.find(i=> i.id ===jobItem.id))].updated = true
+        }
         this.$set(this.materialOrderItems, this.materialOrderItems.indexOf(this.materialOrderItems.find(i => i.id === jobItem.id)), jobItem)
-      } else {
-        return false
-      }
+
+
 
     },
 
@@ -362,54 +488,30 @@ export default {
 
 
 
-        refArr.forEach((jobItem)=>{
+        refArr.forEach((item)=>{
           let vm = this;
-          if(refArr.indexOf(jobItem) === refArr.length-1){
+          if(refArr.indexOf(item) === refArr.length-1){
+            let jobItem = {...item};
             jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
-
+            vm.updateJobItem(jobItem)
             if(jobItem.costAllocation !== 0){
               jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
 
-              let remainder = (vm.totalCost - vm.totalAllocatedCost)
+              let remainder = ((vm.totalCost - vm.totalAllocatedCost))
               jobItem.costAllocation += remainder;
               jobItem.costAllocation = Number(jobItem.costAllocation.toFixed(2))
               vm.updateJobItem(jobItem)
+
             }
 
           }
           else{
-            jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
-            jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
-            vm.updateJobItem(jobItem)
+            let otherJobItem = item
+            otherJobItem.costAllocation = parseFloat(vm.calculateCostAllocation(otherJobItem));
+            otherJobItem.costAllocation = Number(otherJobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
+            vm.updateJobItem(otherJobItem)
           }
         })
-
-        // this.jobItems.forEach((jobItem) => {
-        //   let vm = this;
-        //   let item = this.$refs.table.$refs.item.find(i => i.id === jobItem.id)
-        //
-        //   if (item) {
-        //     if (!item.locked) {
-        //       if(vm.jobItems.indexOf(jobItem) === vm.jobItems.length-1){
-        //         jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
-        //         jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
-        //
-        //         let remainder = (vm.totalCost - vm.totalAllocatedCost)
-        //         jobItem.costAllocation += remainder;
-        //         jobItem.costAllocation = Number(jobItem.costAllocation.toFixed(2))
-        //         vm.updateJobItem(jobItem)
-        //       }
-        //       else{
-        //         jobItem.costAllocation = parseFloat(vm.calculateCostAllocation(jobItem));
-        //         jobItem.costAllocation = Number(jobItem.costAllocation.toString().match(/^\d+(?:\.\d{0,2})?/))
-        //         vm.updateJobItem(jobItem)
-        //       }
-        //
-        //
-        //     }
-        //   }
-        // })
-
       }
     },
 
@@ -460,6 +562,10 @@ export default {
       this.getConfirmation();
     },
 
+    handleSave: function (){
+      this.saveConfirmationShow = true;
+    },
+
     getConfirmation: function () {
       this.confirmationShow = true;
     },
@@ -467,6 +573,7 @@ export default {
     deleteMaterialAllocation: function (item) {
       this.materialOrderItems.splice(this.materialOrderItems.indexOf(this.materialOrderItems.find(i => i.id === item.id)), 1)
       this.confirmationShow = false
+      this.setUpdated(true)
     }
   }
 }
