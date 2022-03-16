@@ -1,5 +1,5 @@
 <template>
-  <b-modal size="lg" v-model="showRef" centered id="modal-1" title="New Material Allocation">
+  <b-modal no-close-on-backdrop size="lg" v-model="showRef" centered id="modal-1" title="New Material Allocation">
     <b-row class="pl-5 pr-5 align-content-center" style="height: 23rem">
       <b-col>
         <b-form>

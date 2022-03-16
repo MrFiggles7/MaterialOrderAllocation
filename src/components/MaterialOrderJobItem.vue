@@ -9,7 +9,7 @@
       <b-select
           class="pl-1"
           plain
-          :disabled="locked ? true : false"
+          :disabled="lockedOrLoaded ? true : false"
           :options="allocationTypeList"
           v-model="allocationType"
       >
@@ -23,7 +23,7 @@
       <b-select
           class="pl-1"
           plain
-          :disabled="locked ? true : false"
+          :disabled="lockedOrLoaded ? true : false"
           :options="typeList"
           v-model="type"
       >
@@ -33,7 +33,7 @@
         :style="updated ? '' : ''"
         style="max-width: 2rem">
       <b-input
-          :disabled="locked ? true : false"
+          :disabled="lockedOrLoaded ? true : false"
           style="vertical-align: text-top;"
           type="number"
           class="w-100 text-right"
@@ -55,7 +55,7 @@
       <b-select
           plain
           class="pl-1"
-          :disabled="locked ? true : false"
+          :disabled="lockedOrLoaded ? true : false"
           :options="shipmentList"
           v-model="lastShipmentIn"
       >
@@ -72,7 +72,7 @@
         </b-col>
         <b-col class="p-0">
           <b-button
-              :disabled="locked ? true : false"
+              :disabled="lockedOrLoaded ? true : false"
               class="table-button w-100"
               size="sm"
               variant="outline-dark"
@@ -92,10 +92,10 @@
       <b-row class="m-0">
         <b-col cols="11" lg="11" class="p-0">
           <span v-b-tooltip.topleft="{customClass: 'tooltip'}"
-                :title="!jobItemQtyMatch ? 'Job Item Qty & Qty fulfilled are not equivalent' : ''">
+                :title="notQtyMatchOrLoading ? 'Job Item Qty & Qty fulfilled are not equivalent' : ''">
             <b-input
-                :style="!jobItemQtyMatch ? borderBlue : ''"
-                :disabled="locked ? true : false"
+                :style="notQtyMatchOrLoading ? borderBlue : ''"
+                :disabled="lockedOrLoaded ? true : false"
                 style="vertical-align: sub;"
                 type="number"
                 class="text-right pr-1 w-100"
@@ -135,7 +135,7 @@
       <b-row class="m-0 p-0 ">
         <span style="vertical-align: text-top">$&nbsp;</span>
         <b-input
-            :disabled="locked ? true : false"
+            :disabled="lockedOrLoaded ? true : false"
             style="vertical-align: text-top; width: 85%;"
             :style="isNegative ? borderRed : ''"
             step=".01"
@@ -179,7 +179,7 @@
     <!--      </b-select>-->
     <!--    </td>-->
     <td class="text-center">
-      <b-button @click="locked = !locked" class="table-button w-100" size="sm" variant="outline-dark">
+      <b-button :disabled="loading" @click="locked = !locked" class="table-button w-100" size="sm" variant="outline-dark">
         <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
       </b-button>
     </td>
@@ -199,7 +199,7 @@
       <b-icon
           v-b-tooltip.hover
           style="vertical-align: center !important"
-          title="Job Item has updates that need to be saved"
+          :title="!loading ? 'Job Item has updates that need to be saved' : ''"
           class="ml-lg-2 info-icon"
           v-if="updated"
           variant="primary"
@@ -244,12 +244,29 @@ export default {
     allocationTypeList: Array,
     calculatedCost: Number,
     totalCost: Number,
+    loading: Boolean,
   },
 
   computed: {
+    notQtyMatchOrLoading: function (){
+      if(this.jobItemQtyMatch === false && this.loading === false){
+        return true
+      }
+      return false
+    },
+
+    lockedOrLoaded: function (){
+      if(this.locked || this.loading){
+        return true
+      }
+      else{
+        return false
+      }
+    },
+
     borderBackgroundColor: function () {
       let style = ''
-      if (this.locked) {
+      if (this.lockedOrLoaded) {
         style += 'background-color: rgba(0,0,0,.1);'
       }
       if (this.updated) {
@@ -257,7 +274,6 @@ export default {
       }
       return style;
     },
-
 
     isNegative: function () {
       if (Math.sign(this.costAllocation) === -1) {
@@ -328,7 +344,7 @@ export default {
     },
     qtyFulfilled: function () {
       if (this.qtyFulfilled !== this.item.qtyFulfilled) {
-        this.updated = true
+        // this.updated = true
         this.$emit('set-updated', true)
       }
     },

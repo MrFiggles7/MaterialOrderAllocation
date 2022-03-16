@@ -8,8 +8,11 @@
       border: 1px solid rgba(0,0,0,.4);"
   >
     <thead>
-    <tr id="table-head" :style="locked ? 'background-color: rgba(0,0,0,.1)' : ''">
-      <th class="text-center" style="width: 4rem" v-b-tooltip.hover title="Material Order ID #">ID #</th>
+    <tr id="table-head"
+        :style="lockedOrLoaded ? 'background-color: rgba(0,0,0,.1)' : ''">
+      <th class="text-center" style="width: 4rem"
+          v-b-tooltip.hover
+          :title="!loading ? 'Material Order ID #' : ''">ID #</th>
       <th class="text-center" style="width: 5.5rem;">Allocation Type</th>
       <th class="text-center" style="width: 5.5rem;">Material Type</th>
       <th class="text-center" style="width: 4rem">Qty Lines</th>
@@ -19,7 +22,7 @@
         <b-row class="m-0">
           <b-col cols="12" lg="6" class="p-0 w-100">
             <div v-b-tooltip.hover
-                 title="Job Item Qty"
+                 :title="!loading ? 'Job Item Qty' : ''"
                  class="align-self-center  pr-2"
                  style="display: inline-block; vertical-align: sub;">
               JI Qty
@@ -27,7 +30,7 @@
           </b-col>
           <b-col class="p-0">
             <b-button
-                :disabled="locked ? true : false"
+                :disabled="lockedOrLoaded ? true : false"
                 class="table-button w-100"
                 size="sm"
                 variant="outline-dark"
@@ -59,14 +62,14 @@
       </th>
       <th
           v-b-tooltip.hover.left
-          title="Cost Allocation: %"
+          :title="!loading ? 'Cost Allocation: %' : ''"
           style="width: 4rem"
           class="text-center">% Allocation
       </th>
       <!--      <th class="text-right">Qty Lines</th>-->
       <!--      <th style="border-right: none">Last Shipment In</th>-->
       <th class="text-center" style="width: 4rem">
-        <b-button @click="setAllLocked" class="table-button w-100" size="sm" variant="outline-dark">
+        <b-button :disabled="loading" @click="setAllLocked" class="table-button w-100" size="sm" variant="outline-dark">
           <b-icon scale=".75" :icon="locked ? 'lock-fill' : 'unlock-fill'"></b-icon>
         </b-button>
       </th>
@@ -85,6 +88,7 @@
         :allocationTypeList="allocationTypeList"
         :shipmentList="shipmentList"
         :totalCost="totalCost"
+        :loading="loading"
         ref="item"
         @delete="$emit('delete', item)"
         @update-job-item="updateJobItem"
@@ -102,6 +106,15 @@
     <!--      <td colspan="3"></td>-->
     <!--    </tr>-->
     </tbody>
+    <div v-if="loading">
+      <b-icon
+          style="position: absolute;
+               top: 50%; left: 50%;
+                transform: translate(-50%, -50%)"
+          icon="arrow-counterclockwise"
+          animation="spin-reverse"
+          font-scale="6"></b-icon>
+    </div>
   </table>
 </template>
 
@@ -123,10 +136,19 @@ export default {
     allocationTypeList: Array,
     shipmentList: Array,
     totalCost: Number,
+    loading: Boolean,
   },
 
   computed: {
 
+    lockedOrLoaded: function (){
+      if(this.locked || this.loading){
+        return true
+      }
+      else{
+        return false
+      }
+    },
 
     totalQtyFulfilled: function () {
       let total = 0;

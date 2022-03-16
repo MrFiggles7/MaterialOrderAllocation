@@ -1,26 +1,32 @@
 <template>
   <div id="app">
     <b-container>
-      <div style="width: 1108px;">
+      <div style="width: 1108px; position: relative;">
         <div class="header-bar clearfix mb-1">
           <div class="left" style="float: left">
             Total Order Cost: <span :style="overUnderAllocated ? 'color: red' : ''">{{ totalAllocatedCost}}</span> /
             {{ totalCost }}
           </div>
 
-
           <div class="right" style="float: right">
-            <b-button :disabled="updatedAndNoNegatives ? false : true"
-                      :variant="updatedAndNoNegatives ? 'success' : 'light'"
+            <span v-if="brokeBoi"
+                  class="mr-3"
+                  style="color: red; font-size: .8rem"
+            >
+              No Remaining Dollars to Distribute
+            </span>
+
+            <b-button :disabled="buttonDisabled"
+                      :variant="!buttonDisabled ? 'success' : 'light'"
                       size="sm"
                       class="mr-3"
                       @click="handleSave"
             >
               Save Changes
-              <b-icon :variant="updatedAndNoNegatives ? 'light' : 'dark'" icon="upload"></b-icon>
+              <b-icon :variant="!buttonDisabled ? 'light' : 'dark'" icon="upload"></b-icon>
             </b-button>
 
-            <b-button @click="show = !show" variant="secondary" size="sm">
+            <b-button :disabled="loading" @click="show = !show" variant="secondary" size="sm">
               Add New
               <b-icon variant="light" icon="plus"></b-icon>
             </b-button>
@@ -34,6 +40,7 @@
             :totalCost="totalCost"
             :allocationTypeList="allocationTypeList"
             :shipmentList="shipmentList"
+            :loading="loading"
             @delete="handleDelete"
             @update-job-item="updateJobItem"
             @set-cost-allocation="setCostAllocation"
@@ -43,7 +50,7 @@
         >
         </material-order-table>
         <div style="float: left;" class="mt-1">
-          <b-button variant="outline-danger" size="sm">
+          <b-button :disabled="loading" variant="outline-danger" size="sm">
             Reset Table Data
             <b-icon class="ml-2" icon="arrow-clockwise"></b-icon>
           </b-button>
@@ -51,11 +58,11 @@
 
 
         <div style="float: right;" class="mt-1">
-          <b-button class="mr-3" @click="handleDistribute" variant="outline-info" size="sm">
+          <b-button :disabled="loading" class="mr-3" @click="handleDistribute" variant="outline-info" size="sm">
             Distribute Remaining Dollars
             <b-icon class="ml-2" icon="shuffle"></b-icon>
           </b-button>
-          <b-button @click="handleSplit" variant="info" size="sm">
+          <b-button :disabled="loading" @click="handleSplit" variant="info" size="sm">
             Allocate by Qty Fulfilled
             <b-icon class="ml-2" icon="arrow-left-right"></b-icon>
           </b-button>
@@ -72,15 +79,15 @@
 
 
         <!--      Delete Item Modal-->
-        <b-modal header-class="text-center" body-class="text-center" v-model="confirmationShow">
+        <b-modal no-close-on-backdrop header-class="text-center" body-class="text-center" v-model="confirmationShow">
           <template #modal-header>
             <div class="w-100 font-weight-bold" style="font-size: 1.4rem">
               Are you Sure?
             </div>
           </template>
 
-          <span>Delete This Material Allocation?</span><br>
-          {{ deletableItem.jobItem.name }}
+          <span>Permanently Delete This Material Allocation?</span><br>
+          <span class="font-weight-bold">{{ deletableItem.jobItem.name }}</span>
           <template #modal-footer>
             <b-button class="mr-auto" variant="secondary" @click="confirmationShow = false">Cancel</b-button>
             <b-button variant="danger" @click="deleteMaterialAllocation(deletableItem)">Delete</b-button>
@@ -89,7 +96,33 @@
 
 
         <!--      //Save Changes Modal-->
-        <b-modal header-class="text-center" body-class="text-center" v-model="saveConfirmationShow">
+        <b-modal no-close-on-backdrop
+                 modal-class="text-center"
+                 :body-class="loading ? 'disabled' : ''"
+                 :header-class="loading ? 'disabled' : ''"
+                 :footer-class="loading ? 'disabled' : ''"
+                 v-model="saveConfirmationShow">
+          <div v-if="loading" style="
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+          "
+          >
+            <div style="
+            position: relative;
+             height: 100%;
+             display: flex;
+             flex-flow: column;">
+              <b-icon
+                  style="display: flex; flex-flow: column;margin: auto;"
+                  icon="arrow-counterclockwise"
+                  animation="spin-reverse"
+                  font-scale="6"></b-icon>
+            </div>
+
+          </div>
           <template #modal-header>
             <div class="w-100 font-weight-bold" style="font-size: 1.4rem">
               Are you Sure?
@@ -97,13 +130,26 @@
           </template>
 
           <span>Save These Changes to the Database?</span><br>
-          <span v-for="item in materialOrderItems" :key="item.id">
-            <span>{{ item.jobItem.name }}</span><br>
+          <span v-for="item in updatedMaterialOrderItems" :key="item.id">
+            <span class="font-weight-bold">{{ item.jobItem.name }}:</span><br><span>Cost Allocation: ${{item.costAllocation.toLocaleString()}}</span><br>
           </span>
+
           <template #modal-footer>
-            <b-button class="mr-auto" variant="secondary" @click="saveConfirmationShow = false">Cancel</b-button>
-            <b-button variant="success" @click="saveChanges()">Save Changes</b-button>
+            <b-button
+                :disabled="loading"
+                class="mr-auto"
+                variant="secondary"
+                @click="saveConfirmationShow = false">
+              Cancel
+            </b-button>
+            <b-button
+                :disabled="loading"
+                variant="success"
+                @click="saveChanges()">
+              Save Changes
+            </b-button>
           </template>
+
         </b-modal>
       </div>
     </b-container>
@@ -125,12 +171,18 @@ export default {
     MaterialOrderTable
   },
 
-  watch: {},
+  watch: {
+    materialOrderItems: function (){
+      this.updatedMaterialOrderItems = this.getUpdatedMaterialOrderItems()
+    }
+  },
 
   mounted() {
     // axios calls to get all existing job items and
     // set the type and allocation type lists
     this.getMaterialOrderItems()
+    this.updatedMaterialOrderItems = this.getUpdatedMaterialOrderItems()
+
     // this.setTypeList()
     // this.setAllocationTypeList()
 
@@ -155,6 +207,7 @@ export default {
     // this.setCostAllocation()
     // this.setAllocatedCost()
     this.lifeCycleUpdated = true;
+    // this.updatedMaterialOrderItems = this.getUpdatedMaterialOrderItems()
 
     if (this.$refs.table.$refs.item.every(i => i.locked === true)) {
       this.$refs.table.locked = true
@@ -169,7 +222,9 @@ export default {
       confirmationShow: false,
       saveConfirmationShow: false,
       updated: false,
+      loading: false,
       lifeCycleUpdated: false,
+      brokeBoi: false,
       deletableItem: {
         jobItem: {
           name: null
@@ -177,7 +232,8 @@ export default {
       },
 
       materialOrderId: null,
-      totalCost: 13498.04,
+      updatedMaterialOrderItems: [],
+      totalCost: 13493.77,
       allocatedCost: 0.00,
       qtyLines: 4,
 
@@ -279,6 +335,8 @@ export default {
   },
 
   computed: {
+
+
     overUnderAllocated: function () {
       if (this.totalAllocatedCost > this.totalCost
           || this.totalAllocatedCost < this.totalCost) {
@@ -301,6 +359,13 @@ export default {
       }
     },
 
+    buttonDisabled: function (){
+      if(!this.updatedAndNoNegatives && !this.loading){
+        return true
+      }
+      return false
+    },
+
     updatedAndNoNegatives: function () {
       let isNegative = false;
       this.materialOrderItems.forEach((item) => {
@@ -321,7 +386,7 @@ export default {
         total += item.costAllocation
       })
       if (total === 0 || total.toFixed(2) === this.totalCost.toFixed(2)) {
-        return total.toFixed(2)
+        return Number(total.toFixed(2))
       }
 
 
@@ -330,6 +395,30 @@ export default {
   },
 
   methods: {
+
+    setBroke: function (bool){
+      if(bool === true){
+        this.brokeBoi = true
+        let vm = this
+        setTimeout(function (){
+          vm.brokeBoi = false
+        }, 3000)
+      }
+      else{
+        this.brokeBoi = false;
+      }
+    },
+
+    getUpdatedMaterialOrderItems: function (){
+      let updatedItems = [];
+
+      this.$refs.table.$refs.item.forEach((item)=>{
+        if(item.updated){
+          updatedItems.push(item.item)
+        }
+      })
+      return updatedItems
+    },
 
     isUpdated: function (jobItem){
       if(this.$refs.table.$refs.item[this.$refs.table.$refs.item
@@ -348,6 +437,7 @@ export default {
       // }).then((response)=>{
       //   this.materialOrderItems = response
       // })
+      this.loading = true
       let arr = [];
       this.materialOrderItems.forEach((item) => {
         if (!this.shipmentList.includes(item.lastShipmentIn)) {
@@ -365,6 +455,7 @@ export default {
         ))
       })
       this.materialOrderItems = arr;
+      this.loading = false
     },
     //
     // setTypeList: function (){
@@ -395,25 +486,59 @@ export default {
     },
 
     handleSplit: function () {
-      this.setUpdated(true)
-      this.setAllocatedCost()
-      this.setCostAllocation()
-      this.setPercentAllocation()
+      if(this.totalCost !== this.totalAllocatedCost){
+        this.setBroke(false)
+        this.loading = true
+        let vm = this;
+
+        setTimeout(function (){
+          vm.setUpdated(true)
+          vm.setAllocatedCost()
+          vm.setCostAllocation()
+          vm.setPercentAllocation()
+          vm.loading = false
+        }, 250);
+      }
+      else{
+        this.setBroke(true)
+      }
+
+
+
     },
 
     handleDistribute: function () {
-      this.setUpdated(true);
-      this.distributeRemainingDollars();
-      this.setPercentAllocation();
+      if(this.totalCost !== this.totalAllocatedCost){
+        this.setBroke(false)
+        this.loading = true
+        let vm = this;
+        setTimeout(function (){
+          vm.setUpdated(true);
+          vm.distributeRemainingDollars();
+          vm.setPercentAllocation();
+          vm.loading = false
+        }, 250);
+      }
+      else{
+        this.setBroke(true)
+      }
     },
 
     saveChanges: function () {
-        this.$refs.table.$refs.item.forEach((item)=>{
+      this.loading = true;
+      let vm = this;
+
+      setTimeout(function (){
+        vm.$refs.table.$refs.item.forEach((item)=>{
           item.updated = false
           item.locked = true
         })
 
-        this.saveConfirmationShow = false;
+        vm.saveConfirmationShow = false;
+        vm.updated = false
+        vm.loading = false
+      }, 1000)
+
 
     },
 
@@ -504,7 +629,7 @@ export default {
 
     compareAllFields: function (item, itemRef) {
       for (const key in item) {
-        if (!(itemRef[key] === item[key])) {
+        if (!(itemRef[key] === item[key]) && key !== 'qtyFulfilled') {
           return false
         }
 
@@ -587,19 +712,25 @@ export default {
     },
 
     createNewMaterialAllocation: function (arr) {
-      console.log(arr)
-      arr.data.forEach((item) => {
-        this.materialOrderItems.push(new MaterialOrderItem(
-            Math.random(),
-            arr.type,
-            arr.allocationType,
-            item,
-            0,
-            0,
-            this.qtyLines,
-            this.getDate(),
-        ))
-      })
+      this.loading = true;
+      let vm = this;
+
+      setTimeout(function (){
+        arr.data.forEach((item) => {
+          vm.materialOrderItems.push(new MaterialOrderItem(
+              Math.random(),
+              arr.type,
+              arr.allocationType,
+              item,
+              0,
+              0,
+              vm.qtyLines,
+              vm.getDate(),
+          ))
+        })
+        vm.loading = false
+      }, 250)
+
     },
 
     handleDelete: function (item) {
@@ -632,5 +763,9 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+}
+
+.disabled {
+  background-color: rgba(0,0,0,.4);
 }
 </style>
