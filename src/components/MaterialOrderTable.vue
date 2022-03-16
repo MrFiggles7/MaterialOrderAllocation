@@ -5,6 +5,7 @@
       width: 1108px;
       border-collapse: collapse;
       border-spacing: 0;
+      position: relative;
       border: 1px solid rgba(0,0,0,.4);"
   >
     <thead>
@@ -64,7 +65,7 @@
           v-b-tooltip.hover.left
           :title="!loading ? 'Cost Allocation: %' : ''"
           style="width: 4rem"
-          class="text-center">% Allocation
+          class="text-center">% Allocationr
       </th>
       <!--      <th class="text-right">Qty Lines</th>-->
       <!--      <th style="border-right: none">Last Shipment In</th>-->
@@ -106,15 +107,15 @@
     <!--      <td colspan="3"></td>-->
     <!--    </tr>-->
     </tbody>
-    <div v-if="loading">
       <b-icon
-          style="position: absolute;
-               top: 50%; left: 50%;
-                transform: translate(-50%, -50%)"
+          v-if="loading"
+          style="
+                  position: absolute;
+                  top: 50%; left: 50%;
+                  transform: translate(-50%, -50%)"
           icon="arrow-counterclockwise"
           animation="spin-reverse"
           font-scale="6"></b-icon>
-    </div>
   </table>
 </template>
 

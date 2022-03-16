@@ -4,12 +4,12 @@
       <div style="width: 1108px; position: relative;">
         <div class="header-bar clearfix mb-1">
           <div class="left" style="float: left">
-            Total Order Cost: <span :style="overUnderAllocated ? 'color: red' : ''">{{ totalAllocatedCost}}</span> /
+            Total Order Cost: <span :style="overUnderAllocated ? 'color: red' : ''">{{ totalAllocatedCost }}</span> /
             {{ totalCost }}
           </div>
 
           <div class="right" style="float: right">
-            <span v-if="brokeBoi"
+            <span v-if="insufficientFunds"
                   class="mr-3"
                   style="color: red; font-size: .8rem"
             >
@@ -50,7 +50,7 @@
         >
         </material-order-table>
         <div style="float: left;" class="mt-1">
-          <b-button :disabled="loading" variant="outline-danger" size="sm">
+          <b-button @click="resetTableData" :disabled="loading" variant="outline-danger" size="sm">
             Reset Table Data
             <b-icon class="ml-2" icon="arrow-clockwise"></b-icon>
           </b-button>
@@ -131,7 +131,9 @@
 
           <span>Save These Changes to the Database?</span><br>
           <span v-for="item in updatedMaterialOrderItems" :key="item.id">
-            <span class="font-weight-bold">{{ item.jobItem.name }}:</span><br><span>Cost Allocation: ${{item.costAllocation.toLocaleString()}}</span><br>
+            <span class="font-weight-bold">{{
+                item.jobItem.name
+              }}:</span><br><span>Cost Allocation: ${{ item.costAllocation.toLocaleString() }}</span><br>
           </span>
 
           <template #modal-footer>
@@ -172,7 +174,7 @@ export default {
   },
 
   watch: {
-    materialOrderItems: function (){
+    materialOrderItems: function () {
       this.updatedMaterialOrderItems = this.getUpdatedMaterialOrderItems()
     }
   },
@@ -182,7 +184,7 @@ export default {
     // set the type and allocation type lists
     this.getMaterialOrderItems()
     this.updatedMaterialOrderItems = this.getUpdatedMaterialOrderItems()
-
+    this.materialOrderItemsRef = [...this.materialOrderItems];
     // this.setTypeList()
     // this.setAllocationTypeList()
 
@@ -224,7 +226,7 @@ export default {
       updated: false,
       loading: false,
       lifeCycleUpdated: false,
-      brokeBoi: false,
+      insufficientFunds: false,
       deletableItem: {
         jobItem: {
           name: null
@@ -254,6 +256,7 @@ export default {
 
       shipmentList: [],
 
+      materialOrderItemsRef: [],
       materialOrderItems: [
         {
           id: Math.random(),
@@ -359,8 +362,8 @@ export default {
       }
     },
 
-    buttonDisabled: function (){
-      if(!this.updatedAndNoNegatives && !this.loading){
+    buttonDisabled: function () {
+      if (!this.updatedAndNoNegatives || this.loading) {
         return true
       }
       return false
@@ -396,36 +399,52 @@ export default {
 
   methods: {
 
-    setBroke: function (bool){
-      if(bool === true){
-        this.brokeBoi = true
+    resetTableData: function (){
+      this.loading = true;
+      let vm = this;
+
+      setTimeout(function (){
+        vm.materialOrderItems = [...vm.materialOrderItemsRef]
+        vm.resetAllStatuses()
+        vm.loading = false;
+      }, 500)
+    },
+
+    resetAllStatuses: function (){
+        this.$refs.table.$refs.item.forEach((item)=>{
+          item.updated = false
+        })
+    },
+
+    setBroke: function (bool) {
+      if (bool === true) {
+        this.insufficientFunds = true
         let vm = this
-        setTimeout(function (){
-          vm.brokeBoi = false
+        setTimeout(function () {
+          vm.insufficientFunds = false
         }, 3000)
-      }
-      else{
-        this.brokeBoi = false;
+      } else {
+        this.insufficientFunds = false;
       }
     },
 
-    getUpdatedMaterialOrderItems: function (){
+    getUpdatedMaterialOrderItems: function () {
       let updatedItems = [];
 
-      this.$refs.table.$refs.item.forEach((item)=>{
-        if(item.updated){
+      this.$refs.table.$refs.item.forEach((item) => {
+        if (item.updated) {
           updatedItems.push(item.item)
         }
       })
       return updatedItems
     },
 
-    isUpdated: function (jobItem){
-      if(this.$refs.table.$refs.item[this.$refs.table.$refs.item
-          .indexOf(this.$refs.table.$refs.item.filter(i=>i.item.id === jobItem.id))]
-          .item === jobItem){
+    isUpdated: function (jobItem) {
+      if (this.$refs.table.$refs.item[this.$refs.table.$refs.item
+          .indexOf(this.$refs.table.$refs.item.filter(i => i.item.id === jobItem.id))]
+          .item === jobItem) {
         return this.$refs.table.$refs.item[this.$refs.table.$refs.item
-            .indexOf(this.$refs.table.$refs.item.filter(i=>i.item.id === jobItem.id))].updated
+            .indexOf(this.$refs.table.$refs.item.filter(i => i.item.id === jobItem.id))].updated
       }
     },
 
@@ -437,7 +456,7 @@ export default {
       // }).then((response)=>{
       //   this.materialOrderItems = response
       // })
-      this.loading = true
+
       let arr = [];
       this.materialOrderItems.forEach((item) => {
         if (!this.shipmentList.includes(item.lastShipmentIn)) {
@@ -455,7 +474,7 @@ export default {
         ))
       })
       this.materialOrderItems = arr;
-      this.loading = false
+
     },
     //
     // setTypeList: function (){
@@ -486,40 +505,22 @@ export default {
     },
 
     handleSplit: function () {
-      if(this.totalCost !== this.totalAllocatedCost){
+
         this.setBroke(false)
-        this.loading = true
-        let vm = this;
-
-        setTimeout(function (){
-          vm.setUpdated(true)
-          vm.setAllocatedCost()
-          vm.setCostAllocation()
-          vm.setPercentAllocation()
-          vm.loading = false
-        }, 250);
-      }
-      else{
-        this.setBroke(true)
-      }
-
-
+        this.setUpdated(true)
+        this.setAllocatedCost()
+        this.setCostAllocation()
+        this.setPercentAllocation()
 
     },
 
     handleDistribute: function () {
-      if(this.totalCost !== this.totalAllocatedCost){
+      if (this.totalCost !== this.totalAllocatedCost) {
         this.setBroke(false)
-        this.loading = true
-        let vm = this;
-        setTimeout(function (){
-          vm.setUpdated(true);
-          vm.distributeRemainingDollars();
-          vm.setPercentAllocation();
-          vm.loading = false
-        }, 250);
-      }
-      else{
+          this.setUpdated(true);
+          this.distributeRemainingDollars();
+          this.setPercentAllocation();
+      } else {
         this.setBroke(true)
       }
     },
@@ -528,8 +529,8 @@ export default {
       this.loading = true;
       let vm = this;
 
-      setTimeout(function (){
-        vm.$refs.table.$refs.item.forEach((item)=>{
+      setTimeout(function () {
+        vm.$refs.table.$refs.item.forEach((item) => {
           item.updated = false
           item.locked = true
         })
@@ -668,8 +669,7 @@ export default {
               jobItem.costAllocation = Number(jobItem.costAllocation.toFixed(2))
               vm.updateJobItem(jobItem)
 
-            }
-            else{
+            } else {
               return 0
             }
 
@@ -715,7 +715,7 @@ export default {
       this.loading = true;
       let vm = this;
 
-      setTimeout(function (){
+      setTimeout(function () {
         arr.data.forEach((item) => {
           vm.materialOrderItems.push(new MaterialOrderItem(
               Math.random(),
@@ -766,6 +766,6 @@ export default {
 }
 
 .disabled {
-  background-color: rgba(0,0,0,.4);
+  background-color: rgba(0, 0, 0, .4);
 }
 </style>
